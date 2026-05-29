@@ -18,13 +18,32 @@ fn main() {
     let peripherals = Peripherals::take().unwrap();
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
 
-    for i in 0..500 {
-        led.set_high().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        led.set_low().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        log::info!("Blink {}", i + 1);
-    }
+
+    led.set_low().unwrap();
+
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+
+    led.set_high().unwrap();
+
+    
+    // for i in 0..500 {
+    //     led.set_high().unwrap();
+    //     thread::sleep(Duration::from_millis(500));
+    //     led.set_low().unwrap();
+    //     thread::sleep(Duration::from_millis(500));
+    //     log::info!("Blink {}", i + 1);
+    // }
 
     log::info!("LED blinking complete!");
 }
