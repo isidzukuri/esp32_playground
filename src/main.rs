@@ -19,25 +19,8 @@ fn main() -> anyhow::Result<()> {
     let peripherals = Peripherals::take()?;
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
-
-    led.set_low().unwrap();
-
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-
-    led.set_high().unwrap();
-
-
+    led_hello(&mut led);
+    
     let mut adc = AdcDriver::new(peripherals.adc1, &Config::new().calibration(true))?;
 
     let mut adc_pin: esp_idf_hal::adc::AdcChannelDriver<{ ATTENUATION }, _> =
@@ -47,4 +30,23 @@ fn main() -> anyhow::Result<()> {
         thread::sleep(Duration::from_millis(100));
         println!("Sound. ADC value: {}", adc.read(&mut adc_pin)?);
     }
+}
+
+fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>){
+    led.set_low().unwrap();
+
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_high().unwrap();
+    thread::sleep(Duration::from_millis(300));
+    led.set_low().unwrap();
+    thread::sleep(Duration::from_millis(300));
+
+    led.set_high().unwrap();
 }
