@@ -1,0 +1,32 @@
+[package]
+name = "esp32-sound-monitor"
+version = "0.1.0"
+authors = ["Your Name <you@example.com>"]
+edition = "2021"
+
+[dependencies]
+# System and logging services
+esp-idf-svc = "0.52.1"
+# Hardware abstraction layer
+esp-idf-hal = { version = "0.46.2", features = ["adc-oneshot-legacy"] }
+# System bindings
+esp-idf-sys = { version = "0.37.1", features = ["binstart"] }
+# Optional: helps with easy error handling if you decide to add it back later
+anyhow = "1.0" 
+
+dht-sensor = "0.2.1"
+embedded-hal = "1.0.0"
+
+[features]
+default = ["adc-oneshot-legacy"]
+adc-oneshot-legacy = ["esp-idf-hal/adc-oneshot-legacy"]
+
+[build-dependencies]
+embuild = "0.33.0"
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = "z"

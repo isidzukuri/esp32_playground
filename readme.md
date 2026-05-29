@@ -41,3 +41,6 @@ Yes. The ESP32 is a dual-core processor.
     sensor reader and log writer goes to core 1 (APP_CPU) 
 
 Pro-tip: Since you are writing to the SD card on Core 1, ensure your SD card card reader pins are physically routed to the pins assigned to the SPI peripheral you initialize in your code.
+
+
+dht delay must be 2 seconds at least
