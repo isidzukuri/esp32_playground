@@ -11,7 +11,7 @@ esp-idf-svc = "0.52.1"
 esp-idf-hal = { version = "0.46.2", features = ["adc-oneshot-legacy"] }
 # System bindings
 esp-idf-sys = { version = "0.37.1", features = ["binstart"] }
-# Optional: helps with easy error handling if you decide to add it back later
+
 embedded-svc = "0.29.0"
 embedded-io = "0.7.1"
 heapless = "0.8"

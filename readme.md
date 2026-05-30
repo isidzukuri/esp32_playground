@@ -1,6 +1,8 @@
 build and flash to esp32
 ```
 cargo espflash flash --monitor
+
+cargo espflash flash --monitor --partition-table partitions.csv
 ```
 
 

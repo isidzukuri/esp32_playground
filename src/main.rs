@@ -10,7 +10,6 @@ use esp_idf_hal::adc::*;
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::sys::adc_atten_t; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use esp_idf_hal::gpio::PinDriver;
-use esp_idf_svc::io::EspIOError;
 
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
@@ -28,21 +27,19 @@ fn main() {
     led_hello(&mut led);
 
 
+    println!("Initializing Wi-Fi Access Point...");
     let sys_loop = EspSystemEventLoop::take().unwrap();
     let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
+    let wifi = wifi_access_point::init_ap(peripherals.modem, sys_loop, nvs);
+    println!("Access Point is running! {:?}", wifi.get_configuration().unwrap());
 
-    println!("Initializing Wi-Fi Access Point...");
 
-    // 4. Call your function and store the handle!
-    // We pass peripherals.modem to give the Wi-Fi stack exclusive control of the radio.
-    let _wifi = wifi_access_point::init_ap(peripherals.modem, sys_loop, nvs);
+    // println!("Web server accessible at http://192.168.4.1");
 
-    println!("Access Point is running! SSID: ESP32-Sensor-AP");
-    println!("Web server accessible at http://192.168.4.1");
-
+    println!("Initializing Web Server...");
 
     // start web server (keep Arc to keep server alive)
-    let _server = web_server::start_web_server("/sd/log.csv").unwrap();
+    // let _server = web_server::start_web_server("/sd/log.csv").unwrap();
 
 
     
