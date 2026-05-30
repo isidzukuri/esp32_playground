@@ -14,6 +14,7 @@ esp-idf-sys = { version = "0.37.1", features = ["binstart"] }
 # Optional: helps with easy error handling if you decide to add it back later
 embedded-svc = "0.29.0"
 embedded-io = "0.7.1"
+heapless = "0.8"
 
 [features]
 default = ["adc-oneshot-legacy"]

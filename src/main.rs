@@ -11,7 +11,9 @@ use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::sys::adc_atten_t; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::io::EspIOError;
+
 mod web_server;
+mod wifi_access_point;
 
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
