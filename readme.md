@@ -25,6 +25,8 @@ timestamp,temperature,humidity,volume
 2025-08-25T12:00:00,24.1,45.2,1500
 ```
 
+search in log file from, to timestamp. Binary Search
+
 
 The Architecture Strategy
 
