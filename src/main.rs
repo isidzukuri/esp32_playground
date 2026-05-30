@@ -10,12 +10,16 @@ use esp_idf_hal::adc::*;
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::sys::adc_atten_t; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use esp_idf_hal::gpio::PinDriver;
+mod web_server;
 
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() -> anyhow::Result<()> {
 
     let peripherals = Peripherals::take().unwrap();
+
+    // start web server (keep Arc to keep server alive)
+    let _server = web_server::start_web_server("/sd/log.csv")?;
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
     led_hello(&mut led);
