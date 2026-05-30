@@ -12,6 +12,9 @@ use esp_idf_hal::sys::adc_atten_t; // If using the `binstart` feature of `esp-id
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::io::EspIOError;
 
+use esp_idf_svc::eventloop::EspSystemEventLoop;
+use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
+
 mod web_server;
 mod wifi_access_point;
 
@@ -21,11 +24,27 @@ fn main() {
 
     let peripherals = Peripherals::take().unwrap();
 
+    let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
+    led_hello(&mut led);
+
+
+    let sys_loop = EspSystemEventLoop::take().unwrap();
+    let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
+
+    println!("Initializing Wi-Fi Access Point...");
+
+    // 4. Call your function and store the handle!
+    // We pass peripherals.modem to give the Wi-Fi stack exclusive control of the radio.
+    let _wifi = wifi_access_point::init_ap(peripherals.modem, sys_loop, nvs);
+
+    println!("Access Point is running! SSID: ESP32-Sensor-AP");
+    println!("Web server accessible at http://192.168.4.1");
+
+
     // start web server (keep Arc to keep server alive)
     let _server = web_server::start_web_server("/sd/log.csv").unwrap();
 
-    let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
-    led_hello(&mut led);
+
     
     let mut adc = AdcDriver::new(peripherals.adc1, &Config::new().calibration(true)).unwrap();
     let mut adc_pin: esp_idf_hal::adc::AdcChannelDriver<{ attenuation::DB_12 }, _> =
