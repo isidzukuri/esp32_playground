@@ -27,6 +27,8 @@ timestamp,temperature,humidity,volume
 
 search in log file from, to timestamp. Binary Search
 
+error handling
+
 
 The Architecture Strategy
 

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use embedded_svc::http::Method;
 use esp_idf_svc::io::EspIOError;
@@ -40,7 +39,7 @@ body { font-family: sans-serif; margin: 12px; }
 canvas { border: 1px solid #ccc; display:block; margin-top:12px; }
 "#;
 
-pub fn start_web_server(log_path: &'static str) -> Result<Arc<EspHttpServer<'static>>> {
+pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError> {
     let mut server = EspHttpServer::new(&Configuration::default())?;
 
     // index
