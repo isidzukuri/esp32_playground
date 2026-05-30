@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 # System and logging services
-esp-idf-svc = "0.52.1"
+esp-idf-svc = { version = "0.52.1", features = ["alloc", "experimental"] }
 # Hardware abstraction layer
 esp-idf-hal = { version = "0.46.2", features = ["adc-oneshot-legacy"] }
 # System bindings
@@ -19,6 +19,9 @@ heapless = "0.8"
 [features]
 default = ["adc-oneshot-legacy"]
 adc-oneshot-legacy = ["esp-idf-hal/adc-oneshot-legacy"]
+
+[[package.metadata.esp-idf-sys.extra_components]]
+remote_component = { name = "espressif/mdns", version = "1.2" }
 
 [build-dependencies]
 embuild = "0.33.0"
