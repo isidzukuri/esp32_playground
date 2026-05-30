@@ -14,21 +14,19 @@ use esp_idf_hal::gpio::PinDriver;
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() -> anyhow::Result<()> {
-    const ATTENUATION: adc_atten_t = attenuation::DB_12;
 
-    let peripherals = Peripherals::take()?;
+    let peripherals = Peripherals::take().unwrap();
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
     led_hello(&mut led);
     
-    let mut adc = AdcDriver::new(peripherals.adc1, &Config::new().calibration(true))?;
-
-    let mut adc_pin: esp_idf_hal::adc::AdcChannelDriver<{ ATTENUATION }, _> =
-        AdcChannelDriver::new(peripherals.pins.gpio32)?;
+    let mut adc = AdcDriver::new(peripherals.adc1, &Config::new().calibration(true)).unwrap();
+    let mut adc_pin: esp_idf_hal::adc::AdcChannelDriver<{ attenuation::DB_12 }, _> =
+        AdcChannelDriver::new(peripherals.pins.gpio32).unwrap();
 
     loop {
         thread::sleep(Duration::from_millis(100));
-        println!("Sound. ADC value: {}", adc.read(&mut adc_pin)?);
+        println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
 
