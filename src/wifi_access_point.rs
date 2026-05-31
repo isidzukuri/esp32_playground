@@ -2,7 +2,7 @@ use esp_idf_svc::wifi::{AccessPointConfiguration, AuthMethod, EspWifi};
 use esp_idf_svc::nvs::EspNvsPartition;
 // use esp_idf_svc::hal::prelude::Peripherals;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_hal::peripherals::Peripherals;
+// use esp_idf_hal::peripherals::Peripherals;
 use heapless::String;
 
 pub fn init_ap(
