@@ -5,8 +5,9 @@ h2 { color: #6cf; }
 .chat-log { background: #111; border: 1px solid #444; border-radius: 8px; height: 240px; margin: 1em 0; padding: 0.75em; overflow-y: auto; text-align: left; }
 .chat-line { margin-bottom: 0.5em; font-size: 0.95rem; }
 .chat-status { color: #8fc; font-style: italic; }
-.chat-form { display: grid; gap: 0.5em; grid-template-columns: 1fr 1fr auto; }
-.chat-form input { background: #222; border: 1px solid #555; border-radius: 6px; color: #eee; padding: 0.75em; }
+.chat-form div { width: 100%; margin-bottom: 10px; }
+.chat-form textarea { height: 50px; }
+.chat-form input, .chat-form textarea { width: 100%; background: #222; border: 1px solid #555; border-radius: 6px; color: #eee; padding: 0.75em; }
 .chat-form button { background: #6cf; border: none; border-radius: 6px; color: #111; font-weight: bold; padding: 0.75em 1em; cursor: pointer; }
 .chat-form button:hover { background: #8df; }
 .chat-raw { color: #cfc; }

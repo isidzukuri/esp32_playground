@@ -17,16 +17,6 @@ function createChatUi() {
   const chatContainer = document.getElementById('chat');
   if (!chatContainer) return;
 
-  chatContainer.innerHTML = `
-    <h3>Chat</h3>
-    <div id="chat-log" class="chat-log"></div>
-    <div class="chat-form">
-      <div><input id="chat-name" type="text" placeholder="Your name" autocomplete="username"></div><br /><br />
-      <div><input id="chat-message" type="text" placeholder="Type a message"><br /></div><br /><br />
-      <div><button id="chat-send">Send</button></div>
-    </div>
-  `;
-
   const chatLog = document.getElementById('chat-log');
   const chatName = document.getElementById('chat-name');
   const chatMessage = document.getElementById('chat-message');
