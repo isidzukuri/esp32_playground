@@ -12,3 +12,78 @@ async function fetchCsv() {
   console.log('CSV length', csv.length);
 }
 fetchCsv();
+
+function createChatUi() {
+  const chatContainer = document.getElementById('chat');
+  if (!chatContainer) return;
+
+  chatContainer.innerHTML = `
+    <h3>Chat</h3>
+    <div id="chat-log" class="chat-log"></div>
+    <div class="chat-form">
+      <div><input id="chat-name" type="text" placeholder="Your name" autocomplete="username"></div><br /><br />
+      <div><input id="chat-message" type="text" placeholder="Type a message"><br /></div><br /><br />
+      <div><button id="chat-send">Send</button></div>
+    </div>
+  `;
+
+  const chatLog = document.getElementById('chat-log');
+  const chatName = document.getElementById('chat-name');
+  const chatMessage = document.getElementById('chat-message');
+  const chatSend = document.getElementById('chat-send');
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  const socket = new WebSocket(wsUrl);
+
+  function appendChatLine(text, className = '') {
+    if (!chatLog) return;
+    const line = document.createElement('div');
+    line.className = `chat-line ${className}`.trim();
+    line.textContent = text;
+    chatLog.appendChild(line);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  socket.addEventListener('open', () => {
+    appendChatLine('Connected to chat', 'chat-status');
+  });
+
+  socket.addEventListener('message', (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      appendChatLine(`${data.user_name}: ${data.message}`);
+    } catch (err) {
+      appendChatLine(event.data, 'chat-raw');
+    }
+  });
+
+  socket.addEventListener('close', () => {
+    appendChatLine('Chat connection closed', 'chat-status');
+  });
+
+  socket.addEventListener('error', () => {
+    appendChatLine('WebSocket error', 'chat-status');
+  });
+
+  function sendMessage() {
+    const name = chatName.value.trim() || 'Anonymous';
+    const message = chatMessage.value.trim();
+    if (!message || socket.readyState !== WebSocket.OPEN) return;
+
+    const payload = JSON.stringify({ user_name: name, message });
+    socket.send(payload);
+    chatMessage.value = '';
+    chatMessage.focus();
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatMessage.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      sendMessage();
+    }
+  });
+}
+
+createChatUi();

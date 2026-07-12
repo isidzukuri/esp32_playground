@@ -1,13 +1,23 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Sound Monitor</title>
-  <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Server</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Sound Monitor</h1>
-  <canvas id="plot" width="800" height="200"></canvas>
-  <script src="/scripts.js"></script>
+  <div class="container">
+    <h2>ESP32 Server</h2>
+    <p>Temperature: <b id="temp">--</b> &deg;C</p>
+    <p>Humidity: <b id="hum">--</b> %</p>
+    <div style="margin-top:1.5em;">
+      <a href="plots.html" style="color:#6cf;font-weight:bold;">View Temperature Plot</a>
+    </div>
+
+    <div id="chat"></div>
+
+  </div>
+  <script src="scripts.js"></script>
 </body>
 </html>
