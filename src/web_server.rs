@@ -142,14 +142,20 @@ fn spawn_active_sessions_threds(ws_sessions: Arc<Mutex<BTreeMap<i32, esp_idf_svc
 #[cfg(esp_idf_httpd_ws_support)]
 fn handle_ws_incoming_message(connection: &mut esp_idf_svc::http::server::ws::EspHttpWsConnection, ws_tx: std::sync::mpsc::Sender<std::string::String>) -> Result<(), EspIOError> {
     // Receiving a frame: first call with empty buffer to get length
-    let (_frame_type, len) = connection.recv(&mut [])?;
+    let (_frame_type, len) = match connection.recv(&mut []) {
+      Ok(val) => val,
+      Err(_) => return Ok(()), // ignore malformed/unmasked frames or other recv errors
+    };
     if len > WS_MSG_MAX_LEN {
       // ignore too large messages
       return Ok(());
     }
 
     let mut buf = [0u8; WS_MSG_MAX_LEN];
-    connection.recv(buf.as_mut())?;
+    if let Err(_) = connection.recv(buf.as_mut()) {
+      // second recv failed - ignore this frame
+      return Ok(());
+    }
 
     let text = match str::from_utf8(&buf[..len]) {
       Ok(st) => st,
@@ -204,7 +210,3 @@ fn parse_ws_message(text: &str) -> (String, String) {
 }
 
 
-// TODO: fix error, after some period in terminal appears
-//  (1162931) httpd_ws: httpd_ws_recv_frame: WS frame is not properly masked.
-// W (1162941) httpd_txrx: httpd_sock_err: error in recv : 128
-// W (1162941) httpd_txrx: httpd_sock_err: error in recv : 128
