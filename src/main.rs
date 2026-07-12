@@ -75,7 +75,7 @@ fn initialize_dns(hostname: &str, instance_name: &str) -> EspMdns {
     mdns.set_hostname(hostname).expect("DNS: Failed to set hostname");
     mdns.set_instance_name(instance_name).expect("DNS: Failed to set instance name");
     mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")]).expect("DNS: Failed to add services");
-    println!("mDNS responder started: http://sensors.local");
+    println!("DNS responder started: http://{}.local", hostname);
     mdns
 }
 
