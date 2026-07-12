@@ -2,7 +2,7 @@ use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use embedded_svc::http::Method;
 use esp_idf_svc::io::EspIOError;
 use std::io::Read;
-use std::sync::{Arc, mpsc::{channel, Sender}};
+use std::sync::{Arc, mpsc::channel};
 use std::thread;
 use std::str;
 
@@ -96,21 +96,10 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
       thread::spawn(move || {
           for broadcast in ws_rx {
               let mut sessions = ws_sessions.lock().unwrap();
-              println!("WS background broadcasting to {} sessions", sessions.len());
-              sessions.retain(|session, sender| {
-                  match sender.send(FrameType::Text(false), broadcast.as_bytes()) {
-                      Ok(()) => {
-                          println!("WS background send success for session {}", session);
-                          true
-                      }
-                      Err(err) => {
-                          println!("WS background send failed for session {}: {:?}", session, err);
-                          false
-                      }
-                  }
+              sessions.retain(|_, sender| {
+                  sender.send(FrameType::Text(false), broadcast.as_bytes()).is_ok()
               });
           }
-          println!("WS background thread exiting");
       });
     }
 
@@ -123,8 +112,6 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
       let ws_tx = ws_tx.clone();
       server.ws_handler("/ws", None, move |connection| -> Result<(), EspError> {
         // Use EspError for WS handler errors
-        let mut connection = connection;
-        println!("WS handler entry is_new={} is_closed={}", connection.is_new(), connection.is_closed());
         // New connection: create detached sender and store it
         if connection.is_new() {
 
@@ -132,7 +119,6 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
           let fd = sender.session();
           let mut sessions = ws_sessions.lock().unwrap();
           sessions.insert(fd, sender);
-          println!("WS new session added {}", fd);
           return Ok(());
         }
 
@@ -141,63 +127,27 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
           let session = connection.session();
           let mut sessions = ws_sessions.lock().unwrap();
           sessions.remove(&session);
-          println!("WS session closed {}", session);
           return Ok(());
         }
 
-        let session = connection.session();
-        {
-            let mut sessions = ws_sessions.lock().unwrap();
-            if !sessions.contains_key(&session) {
-                let sender = connection.create_detached_sender()?;
-                sessions.insert(session, sender);
-                println!("WS recovered detached sender for existing session {}", session);
-            }
-        }
-
-        // Receiving a frame: first call with empty buffer to get length
-        let (frame_type, len) = match connection.recv(&mut []) {
-            Ok(v) => v,
-            Err(err) => {
-                println!("WS recv header failed: {:?}", err);
-                return Err(err);
-            }
-        };
-        println!("WS recv header: {:?} len={}", frame_type, len);
-
-        if !matches!(frame_type, FrameType::Text(_) | FrameType::Binary(_)) {
-          println!("WS ignored non-data frame: {:?}", frame_type);
-          return Ok(());
-        }
-
+         // Receiving a frame: first call with empty buffer to get length
+        let (_frame_type, len) = connection.recv(&mut [])?;
         const MAX_LEN: usize = 1024;
         if len > MAX_LEN {
-          // consume the oversized frame before leaving the handler
-          let mut discard = vec![0u8; len];
-          connection.recv(discard.as_mut_slice())?;
-          connection.send(FrameType::Text(false), b"Request too big")?;
-          connection.send(FrameType::Close, &[])?;
-          return Err(EspError::from_infallible::<ESP_ERR_INVALID_SIZE>());
+          // ignore too large messages
+          return Ok(());
         }
 
         let mut buf = [0u8; MAX_LEN];
-        let (_frame_type2, len2) = connection.recv(buf.as_mut())?;
-        println!("WS recv payload: len2={}", len2);
+        connection.recv(buf.as_mut())?;
 
-        let actual_len = if len2 > 0 && buf[len2 - 1] == 0 { len2 - 1 } else { len2 };
-
-        let text = match str::from_utf8(&buf[..actual_len]) {
+        let text = match str::from_utf8(&buf[..len]) {
           Ok(s) => s,
-          Err(err) => {
-            println!("WS utf8 error: {:?}", err);
-            return Ok(());
-          }
+          Err(_) => return Ok(()),
         };
 
         // parse simple payloads to extract user_name and message
         let (user_name, message) = if text.contains("{") && text.contains("user_name") {
-
-println!("WS parse simple payloads");
 
           // crude JSON extraction to avoid adding serde dependency
           let uname = text
@@ -235,22 +185,13 @@ println!("WS parse simple payloads");
           user_name.replace('"', "'"),
           message.replace('"', "'")
         );
-
-        
         
         // queue broadcast for background delivery
-        println!("WS queueing broadcast: {}", broadcast);
-        if let Err(err) = ws_tx.send(broadcast) {
-            println!("WS broadcast channel send failed: {:?}", err);
-        }
-
-        println!("WS sent.");
+        let _ = ws_tx.send(broadcast);
 
         Ok(())
       })?;
     }
-
-    
 
     Ok(Arc::new(server))
 }

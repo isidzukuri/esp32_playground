@@ -81,3 +81,6 @@ chat server
 queue from reading and writing SD
 
 clean readme
+
+
+https://documentation.espressif.com/esp32-wrover-e_esp32-wrover-ie_datasheet_en.pdf
