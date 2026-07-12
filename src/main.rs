@@ -8,14 +8,13 @@ use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_svc::mdns::EspMdns;
 use std::thread;
 use std::time::Duration;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
 
 mod sd_card;
 mod web_server;
 mod wifi_access_point;
 // mod threads_controller;
-
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
 
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
