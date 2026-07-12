@@ -1,3 +1,12 @@
+# ESP32 lab
+
+ESP32 & Rust playground: implementations of random ideas, testing of hardware, related crates, etc.
+
+Code tested on `LILYGO TTGO T8 V1.7 ESP32-WROVER`
+
+
+## Usage
+
 build and flash to esp32
 ```
 cargo espflash flash --monitor
@@ -52,6 +61,7 @@ Pro-tip: Since you are writing to the SD card on Core 1, ensure your SD card car
 
 dht delay must be 2 seconds at least
 
+## ESP32 specification
 
 +-----------------------------------------------------------------+
 |                           ESP32 SoC                             |
