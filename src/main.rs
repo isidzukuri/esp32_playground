@@ -20,6 +20,9 @@ mod sd_card;
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
 
+const SD_CARD_MOUNT_PATH: &str  = "/sdcard";
+const SENSOR_DATA_LOG_PATH: &str  = "/sdcard/log.csv";
+
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
     let peripherals = Peripherals::take().unwrap();
@@ -42,7 +45,7 @@ fn main() {
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
-    let _server = web_server::start_web_server("/sdcard/log.csv").unwrap();
+    let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
     println!("Web Server started.");
 
 
@@ -72,7 +75,7 @@ fn main() {
 
 fn read_sd(){
     // 1. Mount the physical SD card 
-    let _card_handle = sd_card::mount_sd_card();//.unwrap();
+    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH);//.unwrap();
 
     // 2. Write a file using standard std::io error mapping
     println!("Writing data sample to file...");
@@ -81,7 +84,7 @@ fn read_sd(){
         let mut file = OpenOptions::new()
             .create(true)   // create if not exists
             .append(true)   // append to the end
-            .open("/sdcard/log.csv").unwrap();
+            .open(SENSOR_DATA_LOG_PATH).unwrap();
 
         // Write new lines at the end
         writeln!(file, "Timestamp,Sensor,Value").unwrap();
@@ -90,7 +93,7 @@ fn read_sd(){
         println!("File write successful!");
     }
     // --- Reading ---
-    let file = File::open("/sdcard/log.csv").unwrap();
+    let file = File::open(SENSOR_DATA_LOG_PATH).unwrap();
     let reader = BufReader::new(file);
 
     for line in reader.lines() {

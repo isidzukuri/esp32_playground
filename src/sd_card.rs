@@ -5,7 +5,7 @@ use esp_idf_svc::sys::{
 use esp_idf_svc::sys::*;
 use std::ptr;
 
-pub fn mount_sd_card() {
+pub fn mount_sd_card(path_str: &str) {
     unsafe {
         let mut card: *mut sdmmc_card_t = ptr::null_mut();
 
@@ -84,7 +84,7 @@ pub fn mount_sd_card() {
             is_slot_set_to_uhs1: None,
         };
         
-        let path = CString::new("/sdcard").unwrap();
+        let path = CString::new(path_str).expect("Failed to initialize CString");
 
         let ret = esp_vfs_fat_sdspi_mount(
             path.as_ptr(),
@@ -95,7 +95,7 @@ pub fn mount_sd_card() {
         );
         
         if ret == ESP_OK {
-            println!("SD card mounted at /sdcard");
+            println!("SD card mounted at {}", path_str);
         } else {
             println!("Failed to mount SD card: {}", ret);
         }
