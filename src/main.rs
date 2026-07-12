@@ -7,9 +7,6 @@ use std::thread;
 use std::time::Duration;
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::gpio::PinDriver;
-
-// use esp_idf_svc::eventloop::EspSystemEventLoop;
-// use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
 use esp_idf_svc::mdns::EspMdns;
 
 mod web_server;
@@ -24,6 +21,8 @@ const SD_CARD_MOUNT_PATH: &str  = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str  = "/sdcard/log.csv";
 const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
 const WIFI_AP_DEFAULT_PASSWORD: &str = "password123";
+const DNS_DEFAULT_HOSTNAME: &str = "sensors";
+const DNS_DEFAULT_INSTANCE_NAME: &str = "ESP32 Sensors";
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
@@ -33,19 +32,12 @@ fn main() {
     led_hello(&mut led);
 
     println!("Initializing Wi-Fi Access Point...");
-    // let sys_loop = EspSystemEventLoop::take().unwrap();
-    // let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
     let wifi = wifi_access_point::init_ap(peripherals.modem, 
                                           WIFI_AP_DEFAULT_SSID, 
                                           WIFI_AP_DEFAULT_PASSWORD);
     println!("Access Point is running! {:?}", wifi.get_configuration().unwrap());
 
-    println!("Initializing DNS...");
-    let mut mdns = EspMdns::take().unwrap();
-    mdns.set_hostname("sensors").unwrap();
-    mdns.set_instance_name("ESP32 Sensors").unwrap();
-    mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")]).unwrap();
-    println!("mDNS responder started: http://sensors.local");
+    let _dns = initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
@@ -75,6 +67,16 @@ fn main() {
         thread::sleep(Duration::from_millis(5000));
     //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
+}
+
+fn initialize_dns(hostname: &str, instance_name: &str) -> EspMdns {
+    println!("Initializing DNS...");
+    let mut mdns = EspMdns::take().expect("DNS: Failed initilialization of EspMdns");
+    mdns.set_hostname(hostname).expect("DNS: Failed to set hostname");
+    mdns.set_instance_name(instance_name).expect("DNS: Failed to set instance name");
+    mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")]).expect("DNS: Failed to add services");
+    println!("mDNS responder started: http://sensors.local");
+    mdns
 }
 
 fn read_sd(){
