@@ -18,15 +18,41 @@ use esp_idf_svc::mdns::EspMdns;
 mod web_server;
 mod wifi_access_point;
 mod sd_card;
+mod threads_controller;
 
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
+
+
+fn spawn_thread_demo() {
+    const STACK_SIZE: u32 = 4096;
+
+    // Thread 1 on Core 0 (PRO_CPU)
+    threads_controller::spawn_pinned_task("Thread 1", STACK_SIZE, 0, || loop {
+        println!("Thread 1 - running on Core 0");
+        std::thread::sleep(Duration::from_millis(100));
+    });
+
+    // Thread 2 on Core 0 (PRO_CPU)
+    threads_controller::spawn_pinned_task("Thread 2", STACK_SIZE, 0, || loop {
+        println!("Thread 2 - running on Core 0");
+        std::thread::sleep(Duration::from_millis(100));
+    });
+
+    // Thread 3 on Core 1 (APP_CPU)
+    threads_controller::spawn_pinned_task("Thread 3", STACK_SIZE, 1, || loop {
+        println!("Thread 3 - running on Core 1");
+        std::thread::sleep(Duration::from_millis(100));
+    });
+}
+
 
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
 
     let peripherals = Peripherals::take().unwrap();
+    spawn_thread_demo();
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
     led_hello(&mut led);
@@ -107,3 +133,5 @@ fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>){
 
     led.set_high().unwrap();
 }
+
+

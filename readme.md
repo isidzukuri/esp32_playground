@@ -40,7 +40,7 @@ The Architecture Strategy
 
     Thread 3 (Web Server/Consumer): Low-priority. When a user visits the webpage, it reads from the SD card and sends the data over HTTP.
 
-Yes. The ESP32 is a dual-core processor.
+The ESP32 is a dual-core processor.
 
     web server and log reader to core 0 (PRO_CPU) (the Wi-Fi/Radio core)
 
@@ -50,3 +50,8 @@ Pro-tip: Since you are writing to the SD card on Core 1, ensure your SD card car
 
 
 dht delay must be 2 seconds at least
+
+
+chat server
+
+clean readme
