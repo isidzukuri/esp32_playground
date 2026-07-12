@@ -52,6 +52,30 @@ Pro-tip: Since you are writing to the SD card on Core 1, ensure your SD card car
 dht delay must be 2 seconds at least
 
 
++-----------------------------------------------------------------+
+|                           ESP32 SoC                             |
++--------------------------------+--------------------------------+
+|      Core 0: PRO_CPU           |        Core 1: APP_CPU         |
++--------------------------------+--------------------------------+
+|  - Wi-Fi / Bluetooth Stacks    |  - Main Application Loop       |
+|  - TCP/IP Network Layer        |  - Peripheral Control (SPI/I2C)|
+|  - System Event Handlers       |  - Math & Data Processing      |
+|  - RTOS Background Tasks       |  - User Interface / Displays   |
++--------------------------------+--------------------------------+
+
+**Core 0: PRO_CPU (Protocol CPU)**
+
+Primary Role: Handles the heavy background heavy-lifting, specifically wireless communication and low-level hardware protocols.
+
+**Core 1: APP_CPU (Application CPU)**
+
+Primary Role: Dedicated entirely to execution of user code and application logic.
+
+
+
+
 chat server
+
+queue from reading and writing SD
 
 clean readme
