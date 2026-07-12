@@ -3,22 +3,22 @@
 
 use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 
+use esp_idf_hal::gpio::PinDriver;
+use esp_idf_hal::peripherals::Peripherals;
+use esp_idf_svc::mdns::EspMdns;
 use std::thread;
 use std::time::Duration;
-use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::gpio::PinDriver;
-use esp_idf_svc::mdns::EspMdns;
 
+mod sd_card;
 mod web_server;
 mod wifi_access_point;
-mod sd_card;
 // mod threads_controller;
 
 use std::fs::{File, OpenOptions};
-use std::io::{Write, BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 
-const SD_CARD_MOUNT_PATH: &str  = "/sdcard";
-const SENSOR_DATA_LOG_PATH: &str  = "/sdcard/log.csv";
+const SD_CARD_MOUNT_PATH: &str = "/sdcard";
+const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
 const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
 const WIFI_AP_DEFAULT_PASSWORD: &str = "password123";
 const DNS_DEFAULT_HOSTNAME: &str = "sensors";
@@ -32,10 +32,15 @@ fn main() {
     led_hello(&mut led);
 
     println!("Initializing Wi-Fi Access Point...");
-    let wifi = wifi_access_point::init_ap(peripherals.modem, 
-                                          WIFI_AP_DEFAULT_SSID, 
-                                          WIFI_AP_DEFAULT_PASSWORD);
-    println!("Access Point is running! {:?}", wifi.get_configuration().unwrap());
+    let wifi = wifi_access_point::init_ap(
+        peripherals.modem,
+        WIFI_AP_DEFAULT_SSID,
+        WIFI_AP_DEFAULT_PASSWORD,
+    );
+    println!(
+        "Access Point is running! {:?}",
+        wifi.get_configuration().unwrap()
+    );
 
     let _dns = initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
@@ -44,12 +49,11 @@ fn main() {
     let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
     println!("Web Server started.");
 
-
     // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {
-        read_sd();
+    read_sd();
     // });
 
-    // TODO: 
+    // TODO:
     // - emulate sensor data flow
     //        - sound sensor measurment every 100 ms
     //        - temperature every 2000 ms
@@ -63,34 +67,38 @@ fn main() {
     // - add tests
 
     loop {
-        println!("Heartbeat");   
+        println!("Heartbeat");
         thread::sleep(Duration::from_millis(5000));
-    //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
+        //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
 
 fn initialize_dns(hostname: &str, instance_name: &str) -> EspMdns {
     println!("Initializing DNS...");
     let mut mdns = EspMdns::take().expect("DNS: Failed initilialization of EspMdns");
-    mdns.set_hostname(hostname).expect("DNS: Failed to set hostname");
-    mdns.set_instance_name(instance_name).expect("DNS: Failed to set instance name");
-    mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")]).expect("DNS: Failed to add services");
+    mdns.set_hostname(hostname)
+        .expect("DNS: Failed to set hostname");
+    mdns.set_instance_name(instance_name)
+        .expect("DNS: Failed to set instance name");
+    mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")])
+        .expect("DNS: Failed to add services");
     println!("DNS responder started: http://{}.local", hostname);
     mdns
 }
 
-fn read_sd(){
-    // 1. Mount the physical SD card 
-    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH);//.unwrap();
+fn read_sd() {
+    // 1. Mount the physical SD card
+    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
 
     // 2. Write a file using standard std::io error mapping
     println!("Writing data sample to file...");
-    
+
     {
         let mut file = OpenOptions::new()
-            .create(true)   // create if not exists
-            .append(true)   // append to the end
-            .open(SENSOR_DATA_LOG_PATH).unwrap();
+            .create(true) // create if not exists
+            .append(true) // append to the end
+            .open(SENSOR_DATA_LOG_PATH)
+            .unwrap();
 
         // Write new lines at the end
         writeln!(file, "Timestamp,Sensor,Value").unwrap();
@@ -109,7 +117,7 @@ fn read_sd(){
     println!("File reading ended.");
 }
 
-fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>){
+fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>) {
     led.set_low().unwrap();
 
     led.set_high().unwrap();

@@ -1,8 +1,9 @@
-use std::ffi::CString;
-use esp_idf_svc::sys::{
-    esp_vfs_fat_sdmmc_mount_config_t, esp_vfs_fat_sdspi_mount, sdmmc_card_t, sdmmc_host_t, spi_host_device_t_SPI2_HOST, 
-};
 use esp_idf_svc::sys::*;
+use esp_idf_svc::sys::{
+    esp_vfs_fat_sdmmc_mount_config_t, esp_vfs_fat_sdspi_mount, sdmmc_card_t, sdmmc_host_t,
+    spi_host_device_t_SPI2_HOST,
+};
+use std::ffi::CString;
 use std::ptr;
 
 pub fn mount_sd_card(path_str: &str) {
@@ -13,7 +14,7 @@ pub fn mount_sd_card(path_str: &str) {
 
         unsafe {
             let bus_cfg = spi_bus_config_t {
-                sclk_io_num: 14, // CLK
+                sclk_io_num: 14,                                                      // CLK
                 __bindgen_anon_1: spi_bus_config_t__bindgen_ty_1 { mosi_io_num: 15 }, // MOSI
                 __bindgen_anon_2: spi_bus_config_t__bindgen_ty_2 { miso_io_num: 2 },  // MISO
                 __bindgen_anon_3: spi_bus_config_t__bindgen_ty_3 { quadwp_io_num: -1 },
@@ -53,12 +54,12 @@ pub fn mount_sd_card(path_str: &str) {
             max_files: 5,
             allocation_unit_size: 16 * 1024,
             disk_status_check_enable: false,
-            use_one_fat: false,  
+            use_one_fat: false,
         };
 
         let mut host = sdmmc_host_t {
-            flags: 1 << 3,                                // SDMMC_HOST_FLAG_SPI
-            slot: spi_host_device_t_SPI2_HOST as i32,     // SPI2 bus
+            flags: 1 << 3,                            // SDMMC_HOST_FLAG_SPI
+            slot: spi_host_device_t_SPI2_HOST as i32, // SPI2 bus
             max_freq_khz: 20000,
             io_voltage: 3.3,
             driver_strength: 0,
@@ -83,17 +84,12 @@ pub fn mount_sd_card(path_str: &str) {
             check_buffer_alignment: Some(sdspi_host_check_buffer_alignment),
             is_slot_set_to_uhs1: None,
         };
-        
+
         let path = CString::new(path_str).expect("Failed to initialize CString");
 
-        let ret = esp_vfs_fat_sdspi_mount(
-            path.as_ptr(),
-            &host,
-            &slot_config,
-            &mount_config,
-            &mut card,
-        );
-        
+        let ret =
+            esp_vfs_fat_sdspi_mount(path.as_ptr(), &host, &slot_config, &mount_config, &mut card);
+
         if ret == ESP_OK {
             println!("SD card mounted at {}", path_str);
         } else {
