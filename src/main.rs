@@ -20,21 +20,12 @@ mod threads_controller;
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
 
-const STACK_SIZE: u32 = 4096;
-
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
-
     let peripherals = Peripherals::take().unwrap();
-    // spawn_thread_demo();
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
     led_hello(&mut led);
-
-    // let modem = peripherals.modem;
-    // threads_controller::spawn_pinned_task("web-sevives", STACK_SIZE, 0, || {
-        // start_web_services(modem);
-    // });
 
     println!("Initializing Wi-Fi Access Point...");
     let sys_loop = EspSystemEventLoop::take().unwrap();
@@ -55,14 +46,19 @@ fn main() {
     println!("Web Server started.");
 
 
-    // threads_controller::spawn_pinned_task("sd-reader", STACK_SIZE, 1, || {
+    // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {
         read_sd();
     // });
 
-    // threads_controller::spawn_pinned_task("Thread 3", STACK_SIZE, 1, || loop {
-    //     println!("Heartbeat");
-    //     std::thread::sleep(Duration::from_millis(5000));
-    // });
+    // TODO: 
+    // - emulate sensor data flow
+    //        - sound sensor measurment every 100 ms
+    //        - temperature every 2000 ms
+    //        - light sensor 200 ms
+    //        - write highest value for a minute if changed significantly compared to the last entry
+    // - develop map-reduce for data before storage
+    // - only one thread should read/write SD card, make a queue
+    // - display js plot
 
     loop {
         println!("Heartbeat");   
@@ -118,26 +114,4 @@ fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>){
     thread::sleep(Duration::from_millis(300));
 
     led.set_high().unwrap();
-}
-
-
-fn spawn_thread_demo() {
-
-    // Thread 1 on Core 0 (PRO_CPU)
-    threads_controller::spawn_pinned_task("Thread 1", STACK_SIZE, 0, || loop {
-        println!("Thread 1 - running on Core 0");
-        std::thread::sleep(Duration::from_millis(1000));
-    });
-
-    // Thread 2 on Core 0 (PRO_CPU)
-    threads_controller::spawn_pinned_task("Thread 2", STACK_SIZE, 0, || loop {
-        println!("Thread 2 - running on Core 0");
-        std::thread::sleep(Duration::from_millis(1000));
-    });
-
-    // Thread 3 on Core 1 (APP_CPU)
-    threads_controller::spawn_pinned_task("Thread 3", STACK_SIZE, 1, || loop {
-        println!("Thread 3 - running on Core 1");
-        std::thread::sleep(Duration::from_millis(1000));
-    });
 }

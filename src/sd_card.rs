@@ -8,7 +8,7 @@ pub fn mount_sd_card() {
     unsafe {
         let mut card: *mut sdmmc_card_t = ptr::null_mut();
 
-            println!("SPI bus initialization");
+        println!("SPI bus initialization");
 
         unsafe {
             let bus_cfg = spi_bus_config_t {
