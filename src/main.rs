@@ -8,8 +8,8 @@ use std::time::Duration;
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::gpio::PinDriver;
 
-use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
+// use esp_idf_svc::eventloop::EspSystemEventLoop;
+// use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
 use esp_idf_svc::mdns::EspMdns;
 
 mod web_server;
@@ -22,6 +22,8 @@ use std::io::{Write, BufRead, BufReader};
 
 const SD_CARD_MOUNT_PATH: &str  = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str  = "/sdcard/log.csv";
+const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
+const WIFI_AP_DEFAULT_PASSWORD: &str = "password123";
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
@@ -31,9 +33,11 @@ fn main() {
     led_hello(&mut led);
 
     println!("Initializing Wi-Fi Access Point...");
-    let sys_loop = EspSystemEventLoop::take().unwrap();
-    let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
-    let wifi = wifi_access_point::init_ap(peripherals.modem, sys_loop, nvs);
+    // let sys_loop = EspSystemEventLoop::take().unwrap();
+    // let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
+    let wifi = wifi_access_point::init_ap(peripherals.modem, 
+                                          WIFI_AP_DEFAULT_SSID, 
+                                          WIFI_AP_DEFAULT_PASSWORD);
     println!("Access Point is running! {:?}", wifi.get_configuration().unwrap());
 
     println!("Initializing DNS...");

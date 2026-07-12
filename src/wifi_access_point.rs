@@ -1,21 +1,23 @@
 use esp_idf_svc::wifi::{AccessPointConfiguration, AuthMethod, EspWifi};
-use esp_idf_svc::nvs::EspNvsPartition;
+use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use heapless::String;
 
-pub fn init_ap(
-    modem: esp_idf_hal::modem::Modem,
-    sys_loop: EspSystemEventLoop,
-    nvs: EspNvsPartition<esp_idf_svc::nvs::NvsDefault>,
-) -> EspWifi {
+pub fn init_ap<'a>(
+    modem: esp_idf_hal::modem::Modem<'a>,
+    ssid: &'a str,
+    password: &'a str
+) -> EspWifi<'a> {
+    let sys_loop = EspSystemEventLoop::take().unwrap();
+    let nvs = EspNvsPartition::<NvsDefault>::take().unwrap();
     let mut wifi = EspWifi::new(modem, sys_loop, Some(nvs))
         .expect("Failed to initialize ESP WiFi instance");
 
     let ap_config = AccessPointConfiguration {
-        ssid: "Sensor-Server"
+        ssid: ssid
             .try_into()
             .expect("Failed to convert SSID into heapless String"),
-        password: "password123"
+        password: password
             .try_into()
             .expect("Failed to convert WiFi password into heapless String"),
         auth_method: AuthMethod::WPA2Personal,
