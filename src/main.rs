@@ -15,7 +15,7 @@ use esp_idf_svc::mdns::EspMdns;
 mod web_server;
 mod wifi_access_point;
 mod sd_card;
-mod threads_controller;
+// mod threads_controller;
 
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
@@ -59,6 +59,8 @@ fn main() {
     // - develop map-reduce for data before storage
     // - only one thread should read/write SD card, make a queue
     // - display js plot
+    // - setup clock
+    // - remove magic variables and hardcoded values
 
     loop {
         println!("Heartbeat");   

@@ -73,6 +73,7 @@ Primary Role: Handles the heavy background heavy-lifting, specifically wireless 
 
 Primary Role: Dedicated entirely to execution of user code and application logic.
 
+https://documentation.espressif.com/esp32-wrover-e_esp32-wrover-ie_datasheet_en.pdf
 
 
 
@@ -82,5 +83,3 @@ queue from reading and writing SD
 
 clean readme
 
-
-https://documentation.espressif.com/esp32-wrover-e_esp32-wrover-ie_datasheet_en.pdf

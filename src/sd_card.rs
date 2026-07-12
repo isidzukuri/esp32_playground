@@ -4,6 +4,7 @@ use esp_idf_svc::sys::{
 };
 use esp_idf_svc::sys::*;
 use std::ptr;
+
 pub fn mount_sd_card() {
     unsafe {
         let mut card: *mut sdmmc_card_t = ptr::null_mut();
@@ -35,7 +36,6 @@ pub fn mount_sd_card() {
                 println!("Failed to init SPI bus: {}", ret);
             }
         }
-
 
         // SPI device config
         let slot_config = sdspi_device_config_t {

@@ -7,7 +7,7 @@ use std::thread;
 use std::str;
 
 #[cfg(esp_idf_httpd_ws_support)]
-use esp_idf_svc::sys::{EspError, ESP_ERR_INVALID_SIZE};
+use esp_idf_svc::sys::EspError;
 #[cfg(esp_idf_httpd_ws_support)]
 use embedded_svc::ws::FrameType;
 #[cfg(esp_idf_httpd_ws_support)]
