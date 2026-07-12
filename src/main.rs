@@ -61,6 +61,7 @@ fn main() {
     // - display js plot
     // - setup clock
     // - remove magic variables and hardcoded values
+    // - add tests
 
     loop {
         println!("Heartbeat");   

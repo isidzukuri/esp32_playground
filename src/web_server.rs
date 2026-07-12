@@ -105,7 +105,7 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
         if connection.is_new() {
           let sender = connection.create_detached_sender()?;
           let fd = sender.session();
-          let mut sessions = ws_sessions.lock().unwrap();
+          let mut sessions = ws_sessions.lock().expect("Failed to lock WebSocket sessions");
           sessions.insert(fd, sender);
           return Ok(());
         }
@@ -113,7 +113,7 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
         // Closed connection: remove from sessions
         if connection.is_closed() {
           let session = connection.session();
-          let mut sessions = ws_sessions.lock().unwrap();
+          let mut sessions = ws_sessions.lock().expect("Failed to lock WebSocket sessions");
           sessions.remove(&session);
           return Ok(());
         }
@@ -131,7 +131,7 @@ pub fn start_web_server(log_path: &'static str) -> std::result::Result<Arc<EspHt
 fn spawn_active_sessions_threds(ws_sessions: Arc<Mutex<BTreeMap<i32, esp_idf_svc::http::server::ws::EspHttpWsDetachedSender>>>, ws_rx: std::sync::mpsc::Receiver<std::string::String>) {
     thread::spawn(move || {
         for broadcast in ws_rx {
-            let mut sessions = ws_sessions.lock().unwrap();
+            let mut sessions = ws_sessions.lock().expect("Failed to lock WebSocket sessions");
             sessions.retain(|_, sender| {
                 sender.send(FrameType::Text(false), broadcast.as_bytes()).is_ok()
             });

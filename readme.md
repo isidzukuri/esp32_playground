@@ -31,7 +31,6 @@ timestamp,temperature,humidity,volume
 
 search in log file from, to timestamp. Binary Search
 
-error handling
 
 
 The Architecture Strategy
@@ -77,9 +76,10 @@ https://documentation.espressif.com/esp32-wrover-e_esp32-wrover-ie_datasheet_en.
 
 
 
-chat server
-
 queue from reading and writing SD
+
+error handling
 
 clean readme
 
+tests
