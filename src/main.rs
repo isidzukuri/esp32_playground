@@ -5,12 +5,12 @@ use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, alway
 
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_svc::mdns::EspMdns;
 use std::thread;
 use std::time::Duration;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 
+mod dns;
 mod sd_card;
 mod web_server;
 mod wifi_access_point;
@@ -41,7 +41,7 @@ fn main() {
         wifi.get_configuration().unwrap()
     );
 
-    let _dns = initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
+    let _dns = dns::initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
@@ -70,19 +70,6 @@ fn main() {
         thread::sleep(Duration::from_millis(5000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
-}
-
-fn initialize_dns(hostname: &str, instance_name: &str) -> EspMdns {
-    println!("Initializing DNS...");
-    let mut mdns = EspMdns::take().expect("DNS: Failed initilialization of EspMdns");
-    mdns.set_hostname(hostname)
-        .expect("DNS: Failed to set hostname");
-    mdns.set_instance_name(instance_name)
-        .expect("DNS: Failed to set instance name");
-    mdns.add_service(None, "_http", "_tcp", 80, &[("path", "/")])
-        .expect("DNS: Failed to add services");
-    println!("DNS responder started: http://{}.local", hostname);
-    mdns
 }
 
 fn read_sd() {
