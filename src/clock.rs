@@ -1,7 +1,7 @@
 use esp_idf_sys::{timeval, settimeofday};
 use std::time::{SystemTime, Duration};
 
-pub fn set_time(start_timestamp_secs: i32){
+pub fn set_time(start_timestamp_secs: u64){
     let tv = timeval {
         tv_sec: start_timestamp_secs as _,
         tv_usec: 0,

@@ -23,7 +23,7 @@ const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
 const WIFI_AP_DEFAULT_PASSWORD: &str = "password123";
 const DNS_DEFAULT_HOSTNAME: &str = "sensors";
 const DNS_DEFAULT_INSTANCE_NAME: &str = "ESP32 Sensors";
-const DEFAULT_TIMESTAMP: i32 = 1767268800; // Jan 1, 2026 12:00:00 UTC is 1767268800 seconds since 1970
+const DEFAULT_TIMESTAMP: u64 = 1767268800; // Jan 1, 2026 12:00:00 UTC is 1767268800 seconds since 1970
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
@@ -78,7 +78,6 @@ fn main() {
 }
 
 use fake_sensors::*;
-
 
 
 
