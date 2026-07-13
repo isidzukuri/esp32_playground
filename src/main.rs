@@ -17,6 +17,9 @@ mod web_server;
 mod wifi_access_point;
 // mod threads_controller;
 
+// use fake_sensors::*;
+
+
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
 const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
@@ -77,8 +80,15 @@ fn main() {
     }
 }
 
-use fake_sensors::*;
 
+
+// pub struct SensorsDataEntry {
+//     ts: u64,
+//     sound: f32,
+//     temperature: f32,
+//     humidity: f32,
+//     light: f32,
+// }
 
 
 fn read_sd() {

@@ -105,3 +105,5 @@ error handling
 clean readme
 
 tests
+
+draw scheme for DaqEngine and for architecture

@@ -17,6 +17,7 @@ embedded-io = "0.7.1"
 heapless = "0.8"
 
 fake_sensors = { path = "./src/fake_sensors" }
+daq_engine = { path = "./src/daq_engine" }
 
 [features]
 default = ["adc-oneshot-legacy"]
