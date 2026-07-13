@@ -2,3 +2,4 @@
 /.embuild
 /target
 /Cargo.lock
+src/fake_sensors/target
