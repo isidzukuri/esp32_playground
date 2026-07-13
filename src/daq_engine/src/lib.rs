@@ -10,58 +10,25 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-#[derive(Debug, Clone)]
-pub struct SensorReader {
-    name: String,
-    wait_ms: u64,
-    toleration_percentage: f32,
-    function: fn() -> f32
-}
+mod sensor_reader;
+mod data_entry_trait;
+
+pub use crate::sensor_reader::SensorReader;
+pub use crate::data_entry_trait::*;
+
 
 // pub trait DataStorageTrait {
 //     fn append(&self) -> &u64;
 //     fn attrs(&self) -> &HashMap<String, f32>;
 // }
 
-pub trait DataEntryTrait {
-    fn ts(&self) -> &u64;
-    fn increment_ts(&mut self);
-    fn attrs(&self) -> &mut HashMap<String, f32>;
-    fn data_to_log(&self, attrs_order: Option<Vec<String>>) -> String;
-}
-
-#[macro_export]
-macro_rules! impl_daq_data_entry_trait {
-    ($struct_type:ty) => {
-        impl DataEntryTrait for $struct_type {
-            fn ts(&self) -> &u64 {
-                &self.ts
-            }
-
-            fn increment_ts(&mut self) {
-                self.ts += 1;
-            }
-
-            fn attrs(&self) -> &mut HashMap<String, f32> {
-                &self.attrs
-            }
-
-            fn data_to_log(&self, attrs_order: Option<Vec<String>>) -> String {
-                let mut values = vec![self.ts]; 
-                let attrs_values = map.values().copied().collect();
-                values.splice(0..0, attrs_values);
-                values.iter().map(|val| val.to_string()).collect::<Vec<_>>().join(",");
-            }
-        }
-    };
-}
 
 const DEFAULT_LOGGER_WAIT_MS: u64 = 1000;
 
-pub fn run(last_data_entry: impl DataEntryTrait + Send + 'static, sensor_readers: Vec<SensorReader>){
+pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, sensor_readers: Vec<SensorReader>){
     let (tx, rx) = mpsc::channel();
 
-    spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
+    spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
     spawn_data_logger(rx, last_data_entry);
 
     // storage
@@ -74,50 +41,54 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
         let mut updated = false;
         loop {
             thread::sleep(Duration::from_millis(DEFAULT_LOGGER_WAIT_MS));
+            
+            loop {
+                match rx.try_recv() {
+                    Ok((sensor_name, new_value)) => {
+                        println!("[DaqEngine] Incoming data: {} = {}", sensor_name, new_value);
 
-            match rx.try_recv() {
-                Ok((sensor_name, new_value)) => {
-                    println!("[DaqEngine] Incoming data: {} = {}", sensor_name, new_value);
+                        let baseline_value = data_entry.attrs().get(&sensor_name).copied().unwrap_or(0.0).abs();
+                        let current_deviation = (new_value.abs() - baseline_value).abs();
 
-                    let baseline_value = data_entry.attrs().get(&sensor_name).copied().unwrap_or(0.0).abs();
-                    let current_deviation = (new_value.abs() - baseline_value).abs();
+                        // Check or insert into our highest deviations map
+                        let highest_deviation = highest_deviations.entry(sensor_name.clone()).or_insert(0.0);
 
-                    // Check or insert into our highest deviations map
-                    let highest_deviation = highest_deviations.entry(sensor_name.clone()).or_insert(0.0);
+                        if current_deviation > *highest_deviation {
+                            *highest_deviation = current_deviation;
+                            println!("[DaqEngine] New highest deviation for {}: {}", sensor_name, current_deviation);
+                            
+                            highest_deviations
+                                .entry(sensor_name.clone())
+                                .and_modify(|deviation| *deviation = current_deviation);
 
-                    if current_deviation > *highest_deviation {
-                        *highest_deviation = current_deviation;
-                        println!("[DaqEngine] New highest deviation for {}: {}", sensor_name, current_deviation);
-                        
-                        highest_deviations
-                            .entry(sensor_name.clone())
-                            .and_modify(|deviation| *deviation = current_deviation);
+                            data_entry
+                                .attrs()
+                                .entry(sensor_name.clone())
+                                .and_modify(|val| *val = new_value)
+                                .or_insert(new_value);
 
-                        data_entry
-                            .attrs()
-                            .entry(sensor_name.clone())
-                            .and_modify(|val| *val = new_value);
+                            data_entry.increment_ts(); 
 
-                        data_entry.increment_ts(); 
-
-                        updated = true;
-                    }
-                },
-                Err(TryRecvError::Empty) => { 
-                    if updated {
-                        println!("[DaqEngine] Saving data to the storage: {}", data_entry.data_to_log(None));
-                        
-                        updated = false;
-                    }
-                    println!("[DaqEngine] Waiting for new data")
-                },
-                Err(TryRecvError::Disconnected) => { panic!("[DaqEngine] Error: all Senders have been dropped!"); }
+                            updated = true;
+                        }
+                    },
+                    Err(TryRecvError::Empty) => { 
+                        if updated {
+                            println!("[DaqEngine] Saving data to the storage: {}", data_entry.data_to_log(None));
+                            
+                            updated = false;
+                        }
+                        println!("[DaqEngine] Waiting for new data");
+                        break;
+                    },
+                    Err(TryRecvError::Disconnected) => { panic!("[DaqEngine] Error: all Senders have been dropped!"); }
+                }
             }
         }
     });
 }
 
-fn spawn_sensor_readers(tx: Sender<(String, f32)>, last_data_entry: &impl DataEntryTrait, sensor_readers: Vec<SensorReader>) {
+fn spawn_sensor_readers(tx: Sender<(String, f32)>, last_data_entry: &mut impl DataEntryTrait, sensor_readers: Vec<SensorReader>) {
     for item in sensor_readers.iter() {
         let thread_tx = tx.clone();
         let reader = item.clone();
@@ -156,14 +127,14 @@ mod tests {
     const TIMESTAMP: u64 = 1767268800;
     
     #[derive(Default, Debug)]
-    pub struct TesDataEntry {
+    pub struct TestDataEntry {
         ts: u64,
         attrs: HashMap<String, f32>,
     }
-    impl_daq_data_entry_trait!(TesDataEntry);
+    impl_daq_data_entry_trait!(TestDataEntry);
 
-    fn build_data_entry(ts: Option<u64>, attrs: Option<HashMap<String, f32>>) -> TesDataEntry {
-        TesDataEntry {
+    fn build_data_entry(ts: Option<u64>, attrs: Option<HashMap<String, f32>>) -> TestDataEntry {
+        TestDataEntry {
             ts: ts.unwrap_or(TIMESTAMP),
             attrs: attrs.unwrap_or(HashMap::new())
         }
@@ -185,11 +156,11 @@ mod tests {
     #[test]
     fn test_spawn_sensor_readers(){
         let (tx, rx) = mpsc::channel();
-        let last_data_entry = build_data_entry(None, None);
+        let mut last_data_entry = build_data_entry(None, None);
         let test_sender = build_sensor_reader("test_name".to_string(), 5, 0.0);
         let sensor_readers = vec![test_sender];
 
-        spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
+        spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
 
         thread::sleep(Duration::from_millis(1));
         let package = rx.try_recv();
@@ -203,11 +174,11 @@ mod tests {
     #[test]
     fn test_spawn_sensor_readers_multiple_sends(){
         let (tx, rx) = mpsc::channel();
-        let last_data_entry = build_data_entry(None, None);
+        let mut last_data_entry = build_data_entry(None, None);
         let test_sender = build_sensor_reader("test_name".to_string(), 5, -1.0);
         let sensor_readers = vec![test_sender];
 
-        spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
+        spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
 
         thread::sleep(Duration::from_millis(11));
         let package = rx.try_recv();
@@ -225,11 +196,11 @@ mod tests {
         let (tx, rx) = mpsc::channel();
         let mut attrs = HashMap::new();
         attrs.insert("test_name".to_string(), 0.0);
-        let last_data_entry = build_data_entry(None, Some(attrs));
+        let mut last_data_entry = build_data_entry(None, Some(attrs));
         let test_sender = build_sensor_reader("test_name".to_string(), 5, -1.0);
         let sensor_readers = vec![test_sender];
 
-        spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
+        spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
 
         thread::sleep(Duration::from_millis(1));
         let package = rx.try_recv();
@@ -240,23 +211,36 @@ mod tests {
         assert!(rx.try_recv().is_err());
     }
 
-    // #[test]
-    // fn test_spawn_data_logger(){
-    //     let (tx, rx) = mpsc::channel();
-    //     let last_data_entry = build_data_entry(None, None);
-    //     let test_sender = build_sensor_reader("test_name".to_string(), 5, 0.0);
-    //     let sensor_readers = vec![test_sender];
+    #[test]
+    fn test_spawn_data_logger(){
+        let (tx, rx) = mpsc::channel();
+        let last_data_entry = build_data_entry(None, None);
 
-    //     spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
 
-    //     thread::sleep(Duration::from_millis(1));
-    //     let package = rx.try_recv();
-    //     assert!(package.is_ok());
-    //     let message = package.unwrap();
-    //     assert_eq!(message.0, "test_name".to_string());
-    //     assert!(message.1 > 0.0);
-    //     assert!(rx.try_recv().is_err());
-    // }
+
+        tx.send(("temperature".to_string(), 23.0)).unwrap();
+
+
+        spawn_data_logger(rx, last_data_entry);
+
+        thread::sleep(Duration::from_millis(1010));
+
+
+        // let test_sender = build_sensor_reader("test_name".to_string(), 5, 0.0);
+        // let sensor_readers = vec![test_sender];
+
+        // spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
+
+        // thread::sleep(Duration::from_millis(1));
+        // let package = rx.try_recv();
+        // assert!(package.is_ok());
+        // let message = package.unwrap();
+        // assert_eq!(message.0, "test_name".to_string());
+        // assert!(message.1 > 0.0);
+        // assert!(rx.try_recv().is_err());
+    }
+
+    // when attr exists
     
 
 
