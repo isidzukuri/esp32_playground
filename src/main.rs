@@ -10,6 +10,7 @@ use std::time::Duration;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 
+mod clock;
 mod dns;
 mod sd_card;
 mod web_server;
@@ -22,10 +23,14 @@ const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
 const WIFI_AP_DEFAULT_PASSWORD: &str = "password123";
 const DNS_DEFAULT_HOSTNAME: &str = "sensors";
 const DNS_DEFAULT_INSTANCE_NAME: &str = "ESP32 Sensors";
+const DEFAULT_TIMESTAMP: i32 = 1767268800; // Jan 1, 2026 12:00:00 UTC is 1767268800 seconds since 1970
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
     let peripherals = Peripherals::take().unwrap();
+
+    // TODO: get timestamp from last data log entry
+    clock::set_time(DEFAULT_TIMESTAMP);
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
     led_hello(&mut led);
@@ -66,11 +71,16 @@ fn main() {
     // - add tests
 
     loop {
-        println!("Heartbeat");
+        println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
         thread::sleep(Duration::from_millis(5000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
+
+use fake_sensors::*;
+
+
+
 
 fn read_sd() {
     // 1. Mount the physical SD card

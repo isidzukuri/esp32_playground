@@ -85,6 +85,18 @@ Primary Role: Dedicated entirely to execution of user code and application logic
 https://documentation.espressif.com/esp32-wrover-e_esp32-wrover-ie_datasheet_en.pdf
 
 
+**how many threads can esp32 handle?**
+
+The ESP32 can handle dozens of threads in Rust, limited primarily by its Available RAM rather than an arbitrary cap. While the ESP32 is a dual-core chip, you can comfortably create 30 to 40 threads (with 8K to 16K stack sizes) before running out of memory.
+
+The exact thread threshold depends on a few key factors:
+
+- RAM and Stack Size: Every thread needs its own stack allocation in memory. If you assign smaller stack sizes, you can spawn more threads.
+
+- Available Cores: While you can create dozens of threads, the ESP32 can only physically execute 2 or 3 threads at the exact same time (depending on the specific ESP32 variant). The FreeRTOS scheduler will continuously context-switch the rest.
+
+- Standard Library vs. Bare-Metal: In Rust, you can spawn threads using the std::thread module if you are using the esp-idf-std framework. For bare-metal implementations (using no_std), the embassy and RTIC frameworks are preferred for managing concurrency
+
 
 queue from reading and writing SD
 

@@ -16,6 +16,8 @@ embedded-svc = "0.29.0"
 embedded-io = "0.7.1"
 heapless = "0.8"
 
+fake_sensors = { path = "./src/fake_sensors" }
+
 [features]
 default = ["adc-oneshot-legacy"]
 adc-oneshot-legacy = ["esp-idf-hal/adc-oneshot-legacy"]
