@@ -35,12 +35,13 @@ pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, sensor_rea
         // must be method with mutex
 }
 
+// Saves data to storage only if differ from last entry
 fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntryTrait + Send + 'static) {
-    let mut highest_deviations = HashMap::new();
     thread::spawn(move || {
         let mut updated = false;
         loop {
             thread::sleep(Duration::from_millis(DEFAULT_LOGGER_WAIT_MS));
+            let mut highest_deviations = HashMap::new();
             
             loop {
                 match rx.try_recv() {
@@ -49,8 +50,6 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
 
                         let baseline_value = data_entry.attrs().get(&sensor_name).copied().unwrap_or(0.0).abs();
                         let current_deviation = (new_value.abs() - baseline_value).abs();
-
-                        // Check or insert into our highest deviations map
                         let highest_deviation = highest_deviations.entry(sensor_name.clone()).or_insert(0.0);
 
                         if current_deviation > *highest_deviation {
@@ -75,7 +74,6 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
                     Err(TryRecvError::Empty) => { 
                         if updated {
                             println!("[DaqEngine] Saving data to the storage: {}", data_entry.data_to_log(None));
-                            
                             updated = false;
                         }
                         println!("[DaqEngine] Waiting for new data");
@@ -109,8 +107,8 @@ fn spawn_sensor_readers(tx: Sender<(String, f32)>, last_data_entry: &mut impl Da
     }
 }
 
+// if diff is > tolerated %
 fn is_deviation_significant(current: f32, new: f32, toleration: f32) -> bool {
-    // if diff is > tolerated %
     if current == 0.0 {
         return new != 0.0;
     }

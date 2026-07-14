@@ -8,6 +8,7 @@ Manages background threads for concurrent sensor data collection and lifecycle o
 
 - Dispatch: Hands off the processed data to the storage module for persistence.
 
+Optimized for saving disk space by writing new data entries only if differ from the last stored.
 
 ## Tests
 run tests on host linux machine:
