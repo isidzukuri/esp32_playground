@@ -5,7 +5,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 
 pub trait StorageControllerTrait<SC: StorageClassTrait> {
-    fn new(
+    fn run(
         data_schema: Vec<String>,
         storage_class: SC,
         receiver: Receiver<(String, (u64, HashMap<String, f32>))>,

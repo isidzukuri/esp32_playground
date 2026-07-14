@@ -13,7 +13,7 @@ pub struct StorageController<SC: StorageClassTrait> {
 }
 
 impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for StorageController<SC> {
-    fn new(
+    fn run(
         data_schema: Vec<String>,
         storage_class: SC,
         receiver: Receiver<(String, (u64, HashMap<String, f32>))>,
@@ -148,7 +148,7 @@ mod tests {
             "test".to_string(),
             "second".to_string(),
         ];
-        let storage_controller = StorageController::new(data_schema, storage_class, storage_rx).unwrap();
+        let storage_controller = StorageController::run(data_schema, storage_class, storage_rx).unwrap();
         let test_message = (
             "save".to_string(),
             (TIMESTAMP, HashMap::from([("test".to_string(), 1.2)])),
@@ -191,7 +191,7 @@ mod tests {
             "test".to_string(),
             "second".to_string(),
         ];
-        let storage_controller = StorageController::new(data_schema, storage_class, storage_rx).unwrap();
+        let storage_controller = StorageController::run(data_schema, storage_class, storage_rx).unwrap();
         let test_message = (
             "save".to_string(),
             (TIMESTAMP, HashMap::from([("test".to_string(), 1.2)])),
