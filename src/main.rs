@@ -13,6 +13,7 @@ use std::io::{BufRead, BufReader, Write};
 mod clock;
 mod dns;
 mod sd_card;
+mod top;
 mod web_server;
 mod wifi_access_point;
 // mod threads_controller;
@@ -76,6 +77,7 @@ fn main() {
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
+        top::print_system_stats();
         thread::sleep(Duration::from_millis(5000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }

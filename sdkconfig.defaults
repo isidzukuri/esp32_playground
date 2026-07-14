@@ -15,3 +15,9 @@ CONFIG_FATFS_LFN_HEAP=y
 CONFIG_FATFS_MAX_LFN=255
 CONFIG_LWIP_MAX_SOCKETS=7
 CONFIG_HTTPD_WS_SUPPORT=y
+
+# Enable FreeRTOS Trace facility (needed for vTaskList)
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+
+# Enable Run Time Stats collection (needed for vTaskGetRunTimeStats)
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
