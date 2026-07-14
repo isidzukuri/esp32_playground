@@ -1,16 +1,21 @@
 use std::fmt;
 use std::sync::PoisonError;
-
+use std::num::ParseFloatError;
+use std::num::ParseIntError;
 
 #[derive(Debug, PartialEq)]
 pub enum StorageError {
     OutOfBounds { requested: usize, len: usize },
     NotImplemented { method_name: String, entity: String },
     LockFailure(String),
+    ParseStorageFloat(ParseFloatError),
+    ParseStorageInt(ParseIntError),
     // Io(io::Error),
     // Parse(ParseIntError),
     // InvalidPort(u32),
 }
+
+// 
 
 // Implement std::fmt::Display
 impl fmt::Display for StorageError {
@@ -29,8 +34,13 @@ impl fmt::Display for StorageError {
                 write!(f, "Method is not implemented: '{entity}.{method_name}'")
             }
             StorageError::LockFailure(err_msg) => {
-                // Fixed: replaced the typo `err` with `err_msg`
                 write!(f, "Lock fails: {err_msg}")
+            }
+            StorageError::ParseStorageFloat(err) => {
+                write!(f, "Storage float deserialization error: {err}")
+            }
+            StorageError::ParseStorageInt(err) => {
+                write!(f, "Storage integer deserialization error: {err}")
             }
             
                 // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
@@ -52,7 +62,9 @@ impl std::error::Error for StorageError {
                 method_name: _,
                 entity: _,
             } => None,
-            StorageError::LockFailure(_) => None, 
+            StorageError::LockFailure(_) => None,
+            StorageError::ParseStorageFloat(err) => Some(err),
+            StorageError::ParseStorageInt(err) => Some(err),
                        // Custom errors typically have no underlying cause
                        // StorageError::Io(err) => Some(err),
                        // StorageError::Parse(err) => Some(err),
@@ -60,6 +72,8 @@ impl std::error::Error for StorageError {
         }
     }
 }
+
+
 
 // Implement std::convert::From to allow the `?` operator to automatically convert errors
 impl<T> From<PoisonError<T>> for StorageError {
@@ -69,6 +83,17 @@ impl<T> From<PoisonError<T>> for StorageError {
     }
 }
 
+impl From<ParseFloatError> for StorageError {
+    fn from(err: ParseFloatError) -> Self {
+        StorageError::ParseStorageFloat(err)
+    }
+}
+
+impl From<ParseIntError> for StorageError {
+    fn from(err: ParseIntError) -> Self {
+        StorageError::ParseStorageInt(err)
+    }
+}
 // impl From<ParseIntError> for ConfigError {
 //     fn from(err: ParseIntError) -> Self {
 //         ConfigError::Parse(err)

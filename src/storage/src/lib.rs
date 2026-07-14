@@ -58,14 +58,17 @@ use std::sync::mpsc::Receiver;
 use crate::storage_error::StorageError;
 use crate::storage_class_trait::StorageClassTrait;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 pub trait StorageControllerTrait<SC: StorageClassTrait> {
     fn new(data_schema: Vec<String>, storage_class: SC, receiver: Receiver<(String, (u64, HashMap<String, f32>))>) -> Self;
     fn update_headers(&self) -> Result<(), StorageError>;
     fn start_listening(&self, receiver: Receiver<(String, (u64, HashMap<String, f32>))>);
     fn process_message(message: (String, (u64, HashMap<String, f32>)), storage_mutex: &Arc<Mutex<SC>>, data_schema: &Vec<String>) -> Result<(), StorageError>;
-    fn format_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>;
-    // fn last_entry(&self) -> Result<DataEntry, StorageError>;
+    fn serialize_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>;
+    fn last_entry(&self) -> Result<(u64, HashMap<String, f32>), StorageError>;
     fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError>;
+    fn current_timestamp() -> u64;
     // fn purge(&self) -> Result<(), StorageError>;
 }
 
@@ -112,7 +115,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         match message {
             (ref msg_type, (timestamp, payload)) if msg_type == "save" => {
                 let mut storage = storage_mutex.lock()?;
-                let formatted_payload = Self::format_payload_for_storage(timestamp, payload, data_schema)?;
+                let formatted_payload = Self::serialize_payload_for_storage(timestamp, payload, data_schema)?;
                 storage.append_line(formatted_payload)?;
             }
             (msg_type, _) => {
@@ -125,7 +128,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         Ok(())
     }
 
-    fn format_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>{
+    fn serialize_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>{
         let mut ordered_items = vec![timestamp.to_string()];
         for field in data_schema.iter(){
             if field == "timestamp" { continue };
@@ -137,9 +140,45 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         Ok(ordered_items.join(","))
     }
 
+    fn last_entry(&self) -> Result<(u64, HashMap<String, f32>), StorageError> {
+        let mut timestamp = Self::current_timestamp();
+        let mut storage = self.storage_mutex.lock()?;
+        let mut attrs = HashMap::new();
+        let lines = storage.lines_len()?;
+
+        let mut  parts: Vec<String> = vec![];
+        if lines > 1 {
+            let line = storage.read_line(lines - 1)?;
+            parts = line.split(',').map(String::from).collect();
+        }
+
+        for (idx, field_name) in self.data_schema.iter().enumerate() {
+            if field_name == "timestamp" {
+                if let Some(ts_str) =  parts.get(idx) {
+                    timestamp = ts_str.parse::<u64>()?
+                }
+            } else {
+                let default_val = "0.0".to_string();
+                let val_str = parts.get(idx).unwrap_or(&default_val);
+                let val = val_str.parse::<f32>()?;
+                attrs.insert(field_name.clone(), val);
+            }
+        }
+
+        Ok((timestamp, attrs))
+    }
+
     fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError> {
         let mut storage = self.storage_mutex.lock()?;
         storage.exec_file_reader(reader)
+    }
+
+    fn current_timestamp() -> u64{
+        let now = SystemTime::now();
+        let since_the_epoch = now
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+        since_the_epoch.as_secs()
     }
 }
 
@@ -190,13 +229,43 @@ mod tests {
     }
 
     #[test]
+    fn test_last_entry() {
+        let mut storage_class = VectorStorageClass::default();
+        let (storage_tx, storage_rx) = mpsc::channel();
+        let data_schema = vec!["timestamp".to_string(), "test".to_string(), "second".to_string(),];
+        let storage_controller = StorageController::new(data_schema, storage_class, storage_rx);
+        let test_message = ("save".to_string(),
+                            (   TIMESTAMP, 
+                                HashMap::from([("test".to_string(), 1.2)])
+                            )
+                            );
+        storage_tx.send(test_message.clone());
+
+        let test_message = ("save".to_string(),
+                            (   TIMESTAMP, 
+                                HashMap::from([("second".to_string(), 2.8),
+                                               ("test".to_string(), 1.2)])
+                            )
+                            );
+        storage_tx.send(test_message.clone());
+
+        thread::sleep(Duration::from_millis(20));
+
+        let last_entry = storage_controller.last_entry().unwrap();
+
+        assert!(last_entry.0 > 1767268000);
+        assert_eq!(last_entry.1["test"], 1.2);
+        assert_eq!(last_entry.1["second"], 2.8);
+    }
+
+    #[test]
     fn test_format_payload_success_all_fields_present() {
         let timestamp = 1711111111;
         let mut payload = HashMap::new();
         payload.insert("temp".to_string(), 23.5);
         payload.insert("humidity".to_string(), 60.0);
         let data_schema = vec!["temp".to_string(), "humidity".to_string()];
-        let result = StorageController::<VectorStorageClass>::format_payload_for_storage(timestamp, payload, &data_schema);
+        let result = StorageController::<VectorStorageClass>::serialize_payload_for_storage(timestamp, payload, &data_schema);
         assert!(result.is_ok());
         let formatted = result.unwrap();
         assert_eq!(formatted, "1711111111,23.5,60");
@@ -208,7 +277,7 @@ mod tests {
         let mut payload = HashMap::new();
         payload.insert("temp".to_string(), 18.2);
         let data_schema = vec!["temp".to_string(), "humidity".to_string()];
-        let result = StorageController::<VectorStorageClass>::format_payload_for_storage(timestamp, payload, &data_schema);
+        let result = StorageController::<VectorStorageClass>::serialize_payload_for_storage(timestamp, payload, &data_schema);
         assert!(result.is_ok());
         let formatted = result.unwrap();
         assert_eq!(formatted, "1711111111,18.2,0.0");
@@ -219,7 +288,7 @@ mod tests {
         let timestamp = 1711111111;
         let payload = HashMap::new();
         let data_schema = vec![]; // Schema is empty
-        let result = StorageController::<VectorStorageClass>::format_payload_for_storage(timestamp, payload, &data_schema);
+        let result = StorageController::<VectorStorageClass>::serialize_payload_for_storage(timestamp, payload, &data_schema);
         assert!(result.is_ok());
         let formatted = result.unwrap();
         assert_eq!(formatted, "1711111111");
@@ -233,7 +302,7 @@ mod tests {
         payload.insert("untracked_field".to_string(), 99.9); 
 
         let data_schema = vec!["temp".to_string()];
-        let result = StorageController::<VectorStorageClass>::format_payload_for_storage(timestamp, payload, &data_schema);
+        let result = StorageController::<VectorStorageClass>::serialize_payload_for_storage(timestamp, payload, &data_schema);
         assert!(result.is_ok());
         let formatted = result.unwrap();
         assert_eq!(formatted, "1711111111,23.5");
