@@ -1,9 +1,12 @@
 use std::fmt;
+use std::sync::PoisonError;
+
 
 #[derive(Debug, PartialEq)]
 pub enum StorageError {
     OutOfBounds { requested: usize, len: usize },
     NotImplemented { method_name: String, entity: String },
+    LockFailure(String),
     // Io(io::Error),
     // Parse(ParseIntError),
     // InvalidPort(u32),
@@ -24,7 +27,13 @@ impl fmt::Display for StorageError {
                 entity,
             } => {
                 write!(f, "Method is not implemented: '{entity}.{method_name}'")
-            } // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
+            }
+            StorageError::LockFailure(err_msg) => {
+                // Fixed: replaced the typo `err` with `err_msg`
+                write!(f, "Lock fails: {err_msg}")
+            }
+            
+                // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
               // StorageError::Parse(err) => write!(f, "Failed to parse configuration: {err}"),
               // StorageError::InvalidPort(port) => write!(f, "Port {port} is out of the valid range (1-65535)"),
         }
@@ -42,7 +51,9 @@ impl std::error::Error for StorageError {
             StorageError::NotImplemented {
                 method_name: _,
                 entity: _,
-            } => None, // Custom errors typically have no underlying cause
+            } => None,
+            StorageError::LockFailure(_) => None, 
+                       // Custom errors typically have no underlying cause
                        // StorageError::Io(err) => Some(err),
                        // StorageError::Parse(err) => Some(err),
                        // StorageError::InvalidPort(_) => None, // Custom errors typically have no underlying cause
@@ -51,11 +62,12 @@ impl std::error::Error for StorageError {
 }
 
 // Implement std::convert::From to allow the `?` operator to automatically convert errors
-// impl From<io::Error> for ConfigError {
-//     fn from(err: io::Error) -> Self {
-//         ConfigError::Io(err)
-//     }
-// }
+impl<T> From<PoisonError<T>> for StorageError {
+    fn from(err: PoisonError<T>) -> Self {
+        // We format the PoisonError into a String to drop the generic `T` guard safely.
+        StorageError::LockFailure(err.to_string())
+    }
+}
 
 // impl From<ParseIntError> for ConfigError {
 //     fn from(err: ParseIntError) -> Self {

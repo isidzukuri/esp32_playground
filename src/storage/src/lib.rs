@@ -60,7 +60,6 @@ use crate::storage_class_trait::StorageClassTrait;
 
 pub trait StorageControllerTrait<SC: StorageClassTrait> {
     fn new(storage_class: SC, receiver: Receiver<(String, (u64, HashMap<String, f32>))>) -> Self;
-    // fn new(storage_class: SC) -> Self;
     fn start_listening(&self, receiver: Receiver<(String, (u64, HashMap<String, f32>))>);
     // fn last_entry(&self) -> Result<DataEntry, StorageError>;
     fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError>;
@@ -92,16 +91,22 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
                     // format message`s payload
                     // persist formated payload
                 {
-                    let mut storage = storage_mutex.lock().expect("Failed to lock storage"); //use err
-                    storage.append_line("test, incoming emulation".to_string());
+                    match storage_mutex.lock() {
+                        Ok(mut storage) => {
+                            storage.append_line("test, incoming emulation".to_string());
+                        }
+                        Err(poisoned) => { 
+                            panic!("Failed to lock storage because the mutex is poisoned: {:?}", poisoned);
+                        }
+                    }
                 }
             }
         });
     }
 
     fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError> {
-        // let storage = storage_mutex.lock().expect("Failed to lock storage"); //use err
-        Ok(())
+        let mut storage = self.storage_mutex.lock()?;
+        storage.exec_file_reader(reader)
     }
 }
 
