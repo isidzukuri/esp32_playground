@@ -20,14 +20,14 @@ pub fn print_system_stats() {
     let mut runtime_stats_buf = vec![0u8; 1024];
 
     unsafe {
-        println!("Task Name\tStatus\tPrio\tStackLft\tID");
-        println!("--------------------------------------------------");
-        sys::vTaskList(task_list_buf.as_mut_ptr() as *mut std::os::raw::c_char);
+        // println!("Task Name\tStatus\tPrio\tStackLft\tID");
+        // println!("--------------------------------------------------");
+        // sys::vTaskList(task_list_buf.as_mut_ptr() as *mut std::os::raw::c_char);
         
-        // Find where the C-string actually ends (first null byte)
-        if let Some(end_pos) = task_list_buf.iter().position(|&b| b == 0) {
-            println!("{}", String::from_utf8_lossy(&task_list_buf[..end_pos]));
-        }
+        // // Find where the C-string actually ends (first null byte)
+        // if let Some(end_pos) = task_list_buf.iter().position(|&b| b == 0) {
+        //     println!("{}", String::from_utf8_lossy(&task_list_buf[..end_pos]));
+        // }
 
         println!("\nTask Name\tAbs Time (Cycles)\t% CPU");
         println!("--------------------------------------------------");
