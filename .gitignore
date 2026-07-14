@@ -3,7 +3,8 @@
 /target
 /Cargo.lock
 src/fake_sensors/target
-src/fake_sensors//Cargo.lock
 src/daq_engine/target
+src/storage/target
+src/storage/Cargo.lock
 src/daq_engine/Cargo.lock
-src/daq_engine/Cargo.lock
+src/fake_sensors/Cargo.lock
