@@ -100,12 +100,12 @@ fn spawn_sensor_readers(tx: Sender<(String, f32)>, last_data_entry: &mut impl Da
         thread::spawn(move || {
             loop {
                 let new_value = (reader.function)(); 
-                println!("[DaqEngine][SENSOR] {}: {}", reader.name, new_value);
-                if is_deviation_significant(current_value, new_value, reader.toleration_percentage) {
+                // println!("[DaqEngine][SENSOR] {}: {}", reader.name, new_value);
+                if is_deviation_significant(current_value, new_value, reader.toleration) {
                     current_value = new_value;
                     thread_tx.send((reader.name.clone(), new_value)).unwrap();
                 }
-                println!("[DaqEngine][SENSOR] waiting {}", reader.wait_ms);
+                // println!("[DaqEngine][SENSOR] waiting {}", reader.wait_ms);
                 thread::sleep(Duration::from_millis(reader.wait_ms));
             }
         });
@@ -143,12 +143,12 @@ mod tests {
         }
     }
 
-    fn build_sensor_reader(name: String, wait_ms: u64, toleration_percentage: f32) -> SensorReader{
+    fn build_sensor_reader(name: String, wait_ms: u64, toleration: f32) -> SensorReader{
         SensorReader {
             name: name,
             wait_ms: wait_ms,
             function: random_float,
-            toleration_percentage: toleration_percentage
+            toleration: toleration
         }
     }
 

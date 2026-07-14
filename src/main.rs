@@ -78,7 +78,7 @@ fn main() {
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
         top::print_system_stats();
-        thread::sleep(Duration::from_millis(5000));
+        thread::sleep(Duration::from_millis(15000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
@@ -134,25 +134,25 @@ fn start_sensor_data_aquisition_engine() {
         name: "sound".to_string(),
         wait_ms: 50,
         function: read_sound_sensor,
-        toleration_percentage: 5.0
+        toleration: 0.05
     };
     let temperature_sensor_reader = daq_engine::SensorReader {
         name: "temperature".to_string(),
         wait_ms: 60000,
         function: read_temperature_sensor,
-        toleration_percentage: 0.01
+        toleration: 0.001
     };
     let humidity_sensor_reader = daq_engine::SensorReader {
         name: "humidity".to_string(),
         wait_ms: 60000,
         function: read_humidity_sensor,
-        toleration_percentage: 0.1
+        toleration: 0.001
     };
     let light_sensor_reader = daq_engine::SensorReader {
         name: "light".to_string(),
         wait_ms: 500,
         function: read_light_sensor,
-        toleration_percentage: 1.0
+        toleration: 0.01
     };
     let sensor_readers = vec![sound_sensor_reader, 
                              temperature_sensor_reader, 
