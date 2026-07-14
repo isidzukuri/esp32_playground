@@ -25,18 +25,21 @@ pub use crate::data_entry_trait::*;
 
 const DEFAULT_LOGGER_WAIT_MS: u64 = 1000;
 
-pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, sensor_readers: Vec<SensorReader>){
+pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, 
+           sensor_readers: Vec<SensorReader>,
+           storage_chnl: Sender<(u64, HashMap<String, f32>)>){
+
     let (tx, rx) = mpsc::channel();
 
     spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
-    spawn_data_logger(rx, last_data_entry);
+    spawn_data_logger(rx, last_data_entry, storage_chnl);
 
     // storage
         // must be method with mutex
 }
 
 // Saves data to storage only if differ from last entry
-fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntryTrait + Send + 'static) {
+fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntryTrait + Send + 'static, storage_chnl: Sender<(u64, HashMap<String, f32>)>) {
     thread::spawn(move || {
         let mut updated = false;
         loop {
@@ -74,6 +77,7 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
                     Err(TryRecvError::Empty) => { 
                         if updated {
                             println!("[DaqEngine] Saving data to the storage: {}", data_entry.data_to_log(None));
+                            storage_chnl.send(data_entry.for_storage_channel());
                             updated = false;
                         }
                         println!("[DaqEngine] Waiting for new data");
@@ -245,7 +249,7 @@ mod tests {
 
 
     #[test]
-    fn test_smtn() {
+    fn test_run() {
         let mut attrs = HashMap::new();
         attrs.insert("sound".to_string(), 0.0);
         attrs.insert("temperature".to_string(), 0.0);
@@ -258,8 +262,11 @@ mod tests {
         dbg!(&last_data_entry);
 
         let sensor_readers = vec![sound_sensor_reader, temperature_sensor_reader];
+
+        let (tx, rx) = mpsc::channel();
+
         
-        run(last_data_entry, sensor_readers);
+        run(last_data_entry, sensor_readers, tx);
 
         // let result = add(2, 2);
         // assert_eq!(result, 4);

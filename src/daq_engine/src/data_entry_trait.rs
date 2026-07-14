@@ -5,6 +5,7 @@ pub trait DataEntryTrait {
     fn increment_ts(&mut self);
     fn attrs(&mut self) -> &mut HashMap<String, f32>;
     fn data_to_log(&self, attrs_order: Option<Vec<String>>) -> String;
+    fn for_storage_channel(&self) -> (u64, HashMap<String, f32>);
 }
 
 #[macro_export]
@@ -38,6 +39,10 @@ macro_rules! impl_daq_data_entry_trait {
                         format!("{},{}", self.ts, val_string)
                     }
                 }
+            }
+
+            fn for_storage_channel(&self) -> (u64, HashMap<String, f32>) {
+                (self.ts, self.attrs.clone())
             }
         }
     };
@@ -99,5 +104,15 @@ mod tests {
 
         let val_string = inst.data_to_log(Some(vec!["test2".to_string(), "test3".to_string(), "test4".to_string(), "test".to_string()]));
         assert_eq!(val_string, "1767268800,2.2,3.3,0,1.1".to_string());
+    }
+
+    #[test]
+    fn test_for_storage_channel(){
+        let mut inst = TestDataEntry {
+            ts: TIMESTAMP,
+            attrs: HashMap::from([("test".to_string(), 1.2)])
+        };
+
+        assert_eq!(inst.for_storage_channel(), (TIMESTAMP, HashMap::from([("test".to_string(), 1.2)])));
     }
 }
