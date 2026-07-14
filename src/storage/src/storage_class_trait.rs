@@ -8,6 +8,6 @@ pub trait StorageClassTrait {
     fn purge(&mut self) -> Result<(), StorageError>;
     fn exec_file_reader(
         &mut self,
-        reader: fn(file: std::fs::File) -> (),
+        reader: fn(path: &'static str) -> (),
     ) -> Result<(), StorageError>;
 }

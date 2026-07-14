@@ -46,7 +46,7 @@ impl StorageClassTrait for VectorStorageClass {
 
     fn exec_file_reader(
         &mut self,
-        _reader: fn(file: std::fs::File) -> (),
+        reader: fn(_path: &'static str,) -> ()
     ) -> Result<(), StorageError> {
         Err(StorageError::NotImplemented {
             method_name: "exec_file_reader".to_string(),
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_exec_file_reader() {
         let mut instance = VectorStorageClass::default();
-        fn test_fn(_file: std::fs::File) -> () {
+        fn test_fn(_path: &'static str) -> () {
             ()
         }
 
