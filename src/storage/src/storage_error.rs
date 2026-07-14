@@ -1,7 +1,7 @@
 use std::fmt;
-use std::sync::PoisonError;
 use std::num::ParseFloatError;
 use std::num::ParseIntError;
+use std::sync::PoisonError;
 
 #[derive(Debug, PartialEq)]
 pub enum StorageError {
@@ -10,12 +10,7 @@ pub enum StorageError {
     LockFailure(String),
     ParseStorageFloat(ParseFloatError),
     ParseStorageInt(ParseIntError),
-    // Io(io::Error),
-    // Parse(ParseIntError),
-    // InvalidPort(u32),
 }
-
-// 
 
 // Implement std::fmt::Display
 impl fmt::Display for StorageError {
@@ -41,9 +36,7 @@ impl fmt::Display for StorageError {
             }
             StorageError::ParseStorageInt(err) => {
                 write!(f, "Storage integer deserialization error: {err}")
-            }
-            
-                // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
+            } // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
               // StorageError::Parse(err) => write!(f, "Failed to parse configuration: {err}"),
               // StorageError::InvalidPort(port) => write!(f, "Port {port} is out of the valid range (1-65535)"),
         }
@@ -65,15 +58,9 @@ impl std::error::Error for StorageError {
             StorageError::LockFailure(_) => None,
             StorageError::ParseStorageFloat(err) => Some(err),
             StorageError::ParseStorageInt(err) => Some(err),
-                       // Custom errors typically have no underlying cause
-                       // StorageError::Io(err) => Some(err),
-                       // StorageError::Parse(err) => Some(err),
-                       // StorageError::InvalidPort(_) => None, // Custom errors typically have no underlying cause
         }
     }
 }
-
-
 
 // Implement std::convert::From to allow the `?` operator to automatically convert errors
 impl<T> From<PoisonError<T>> for StorageError {
@@ -94,8 +81,3 @@ impl From<ParseIntError> for StorageError {
         StorageError::ParseStorageInt(err)
     }
 }
-// impl From<ParseIntError> for ConfigError {
-//     fn from(err: ParseIntError) -> Self {
-//         ConfigError::Parse(err)
-//     }
-// }
