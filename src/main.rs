@@ -19,7 +19,6 @@ mod wifi_access_point;
 
 // use fake_sensors::*;
 
-
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
 const WIFI_AP_DEFAULT_SSID: &str = "Sensor-Server";
@@ -72,6 +71,8 @@ fn main() {
     // - setup clock
     // - remove magic variables and hardcoded values
     // - add tests
+    
+    start_sensor_data_aquisition_engine();
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
@@ -89,6 +90,48 @@ fn main() {
 //     humidity: f32,
 //     light: f32,
 // }
+
+// use rand::RngExt;
+use fake_sensors::*;
+
+use std::collections::HashMap;
+use std::sync::mpsc;
+use daq_engine;
+use daq_engine::DataEntryTrait;
+
+
+#[derive(Default, Debug)]
+pub struct SensorDataEntry {
+    ts: u64,
+    attrs: HashMap<String, f32>,
+}
+daq_engine::impl_daq_data_entry_trait!(SensorDataEntry);
+
+fn build_sensor_reader(name: String, wait_ms: u64, toleration_percentage: f32) -> daq_engine::SensorReader{
+    daq_engine::SensorReader {
+        name: name,
+        wait_ms: wait_ms,
+        function: random_float,
+        toleration_percentage: toleration_percentage
+    }
+}
+
+fn random_float() -> f32 {
+    fake_sensors::read_sensor(fake_sensors::SensorType::Sound)
+}
+
+fn start_sensor_data_aquisition_engine() {
+    let last_data_entry = SensorDataEntry {
+        ts: 1767268800,
+        attrs: HashMap::new()
+    };
+    let sound_sensor_reader = build_sensor_reader("sound".to_string(), 100, 2.0);
+    let temperature_sensor_reader = build_sensor_reader("temperature".to_string(), 200, 0.01);
+    let sensor_readers = vec![sound_sensor_reader, temperature_sensor_reader];
+    let (storage_tx, storage_rx) = mpsc::channel();
+
+    daq_engine::run(last_data_entry, sensor_readers, storage_tx);
+}
 
 
 fn read_sd() {
