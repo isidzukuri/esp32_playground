@@ -36,9 +36,7 @@ impl fmt::Display for StorageError {
             }
             StorageError::ParseStorageInt(err) => {
                 write!(f, "Storage integer deserialization error: {err}")
-            } // StorageError::Io(err) => write!(f, "I/O error occurred: {err}"),
-              // StorageError::Parse(err) => write!(f, "Failed to parse configuration: {err}"),
-              // StorageError::InvalidPort(port) => write!(f, "Port {port} is out of the valid range (1-65535)"),
+            }
         }
     }
 }
