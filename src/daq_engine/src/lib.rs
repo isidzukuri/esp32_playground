@@ -76,8 +76,9 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
                     },
                     Err(TryRecvError::Empty) => { 
                         if updated {
-                            println!("[DaqEngine] Saving data to the storage: {}", data_entry.data_to_log(None));
-                            storage_chnl.send(data_entry.for_storage_channel());
+                            let serialized_entry = data_entry.for_storage_channel();
+                            println!("[DaqEngine] Saving data to the storage: {:?}", &serialized_entry);
+                            storage_chnl.send(serialized_entry);
                             updated = false;
                         }
                         println!("[DaqEngine] Waiting for new data");
@@ -104,7 +105,7 @@ fn spawn_sensor_readers(tx: Sender<(String, f32)>, last_data_entry: &mut impl Da
                     current_value = new_value;
                     thread_tx.send((reader.name.clone(), new_value)).unwrap();
                 }
-                println!("waiting {}", reader.wait_ms);
+                println!("[DaqEngine][SENSOR] waiting {}", reader.wait_ms);
                 thread::sleep(Duration::from_millis(reader.wait_ms));
             }
         });
@@ -170,14 +171,15 @@ mod tests {
         let message = package.unwrap();
         assert_eq!(message.0, "test_name".to_string());
         assert!(message.1 > 0.0);
-        assert!(rx.try_recv().is_err());
+        assert_eq!(rx.try_recv(), Err(TryRecvError::Empty));
     }
     
+    // TODO: fix potentially flaky test
     #[test]
     fn test_spawn_sensor_readers_multiple_sends(){
         let (tx, rx) = mpsc::channel();
         let mut last_data_entry = build_data_entry(None, None);
-        let test_sender = build_sensor_reader("test_name".to_string(), 5, -1.0);
+        let test_sender = build_sensor_reader("test_name".to_string(), 8, -1.0);
         let sensor_readers = vec![test_sender];
 
         spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
@@ -189,8 +191,8 @@ mod tests {
         assert_eq!(message.0, "test_name".to_string());
         assert!(message.1 > 0.0);
         assert!(rx.try_recv().is_ok());
-        assert!(rx.try_recv().is_ok());
-        assert!(rx.try_recv().is_err());
+        // assert!(rx.try_recv().is_ok());
+        assert_eq!(rx.try_recv(), Err(TryRecvError::Empty));
     }
 
     #[test]
@@ -210,78 +212,94 @@ mod tests {
         let message = package.unwrap();
         assert_eq!(message.0, "test_name".to_string());
         assert!(message.1 > 0.0);
-        assert!(rx.try_recv().is_err());
+        assert_eq!(rx.try_recv(), Err(TryRecvError::Empty));
     }
 
     #[test]
     fn test_spawn_data_logger(){
         let (tx, rx) = mpsc::channel();
+        let (storage_tx, storage_rx) = mpsc::channel();
         let last_data_entry = build_data_entry(None, None);
-
-
 
         tx.send(("temperature".to_string(), 23.0)).unwrap();
 
+        spawn_data_logger(rx, last_data_entry, storage_tx);
 
-        spawn_data_logger(rx, last_data_entry);
+        thread::sleep(Duration::from_millis(2010));
+
+        let package = storage_rx.try_recv();
+        let message = package.unwrap();
+
+        assert_eq!(message.0, 1767268801);
+        assert_eq!(*message.1.get("temperature").unwrap(), 23.0);
+        assert!(message.1.get("not_existing").is_none());
+        assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
+    }
+
+    #[test]
+    fn test_spawn_data_logger_when_data_exists(){
+        let (tx, rx) = mpsc::channel();
+        let (storage_tx, storage_rx) = mpsc::channel();
+        let last_data_entry = build_data_entry(None, Some(HashMap::from([("temperature".to_string(), 1.2)])));
+
+        tx.send(("temperature".to_string(), 23.0)).unwrap();
+
+        spawn_data_logger(rx, last_data_entry, storage_tx);
 
         thread::sleep(Duration::from_millis(1010));
 
+        let package = storage_rx.try_recv();
+        let message = package.unwrap();
 
-        // let test_sender = build_sensor_reader("test_name".to_string(), 5, 0.0);
-        // let sensor_readers = vec![test_sender];
-
-        // spawn_sensor_readers(tx, &last_data_entry, sensor_readers);
-
-        // thread::sleep(Duration::from_millis(1));
-        // let package = rx.try_recv();
-        // assert!(package.is_ok());
-        // let message = package.unwrap();
-        // assert_eq!(message.0, "test_name".to_string());
-        // assert!(message.1 > 0.0);
-        // assert!(rx.try_recv().is_err());
+        assert_eq!(message.0, 1767268801);
+        assert_eq!(*message.1.get("temperature").unwrap(), 23.0);
+        assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
     }
 
-    // when attr exists
-    
+    #[test]
+    fn test_spawn_data_logger_when_data_measurment_is_not_changed(){
+        let (tx, rx) = mpsc::channel();
+        let (storage_tx, storage_rx) = mpsc::channel();
+        let last_data_entry = build_data_entry(None, Some(HashMap::from([("temperature".to_string(), 1.2)])));
 
+        tx.send(("temperature".to_string(), 1.2)).unwrap();
 
+        spawn_data_logger(rx, last_data_entry, storage_tx);
 
+        thread::sleep(Duration::from_millis(1010));
+
+        assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
+    }
 
     #[test]
     fn test_run() {
         let mut attrs = HashMap::new();
         attrs.insert("sound".to_string(), 0.0);
         attrs.insert("temperature".to_string(), 0.0);
-
         let last_data_entry = build_data_entry(None, Some(attrs));
-
         let sound_sensor_reader = build_sensor_reader("sound".to_string(), 100, 2.0);
-        let temperature_sensor_reader = build_sensor_reader("temperature".to_string(), 2000, 0.01);
-
-        dbg!(&last_data_entry);
-
+        let temperature_sensor_reader = build_sensor_reader("temperature".to_string(), 200, 0.01);
         let sensor_readers = vec![sound_sensor_reader, temperature_sensor_reader];
+        let (storage_tx, storage_rx) = mpsc::channel();
 
-        let (tx, rx) = mpsc::channel();
+        run(last_data_entry, sensor_readers, storage_tx);
 
-        
-        run(last_data_entry, sensor_readers, tx);
+        thread::sleep(Duration::from_millis(1010));
 
-        // let result = add(2, 2);
-        // assert_eq!(result, 4);
+        let package = storage_rx.try_recv();
+        let message = package.unwrap();
 
+        assert!(message.0 > 1767268800);
+        assert!(*message.1.get("temperature").unwrap() != 0.0);
+        assert!(*message.1.get("sound").unwrap() != 0.0);
+        assert!(message.1.get("not_existing").is_none());
+        assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
 
+        thread::sleep(Duration::from_millis(1010));
 
-        thread::sleep(Duration::from_millis(1100));
-        // assert if storage changed
-        // add to storage new entry which cant be generated by test harness
-        // sleep 1100
-        // assert if storage changed
-
+        assert!(storage_rx.try_recv().is_ok());
+        assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
     }
-
-    // when sensor fn has name which is not in DataEntry.attrs
 
     #[test]
     fn test_is_deviation_significant_no_deviation() {
