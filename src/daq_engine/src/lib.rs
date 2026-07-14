@@ -27,7 +27,7 @@ const DEFAULT_LOGGER_WAIT_MS: u64 = 1000;
 
 pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, 
            sensor_readers: Vec<SensorReader>,
-           storage_chnl: Sender<(u64, HashMap<String, f32>)>){
+           storage_chnl: Sender<(String, (u64, HashMap<String, f32>))>){
 
     let (tx, rx) = mpsc::channel();
 
@@ -39,7 +39,7 @@ pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static,
 }
 
 // Saves data to storage only if differ from last entry
-fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntryTrait + Send + 'static, storage_chnl: Sender<(u64, HashMap<String, f32>)>) {
+fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntryTrait + Send + 'static, storage_chnl: Sender<(String, (u64, HashMap<String, f32>))>) {
     thread::spawn(move || {
         let mut updated = false;
         loop {
@@ -78,7 +78,7 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
                         if updated {
                             let serialized_entry = data_entry.for_storage_channel();
                             println!("[DaqEngine] Saving data to the storage: {:?}", &serialized_entry);
-                            storage_chnl.send(serialized_entry);
+                            let _ = storage_chnl.send(("save".to_string(), serialized_entry));
                             updated = false;
                         }
                         println!("[DaqEngine] Waiting for new data");
@@ -230,9 +230,10 @@ mod tests {
         let package = storage_rx.try_recv();
         let message = package.unwrap();
 
-        assert_eq!(message.0, 1767268801);
-        assert_eq!(*message.1.get("temperature").unwrap(), 23.0);
-        assert!(message.1.get("not_existing").is_none());
+        assert_eq!(message.0, "save".to_string());
+        assert_eq!(message.1.0, 1767268801);
+        assert_eq!(*message.1.1.get("temperature").unwrap(), 23.0);
+        assert!(message.1.1.get("not_existing").is_none());
         assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
     }
 
@@ -251,8 +252,9 @@ mod tests {
         let package = storage_rx.try_recv();
         let message = package.unwrap();
 
-        assert_eq!(message.0, 1767268801);
-        assert_eq!(*message.1.get("temperature").unwrap(), 23.0);
+        assert_eq!(message.0, "save".to_string());
+        assert_eq!(message.1.0, 1767268801);
+        assert_eq!(*message.1.1.get("temperature").unwrap(), 23.0);
         assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
     }
 
@@ -289,10 +291,11 @@ mod tests {
         let package = storage_rx.try_recv();
         let message = package.unwrap();
 
-        assert!(message.0 > 1767268800);
-        assert!(*message.1.get("temperature").unwrap() != 0.0);
-        assert!(*message.1.get("sound").unwrap() != 0.0);
-        assert!(message.1.get("not_existing").is_none());
+        assert_eq!(message.0, "save".to_string());
+        assert!(message.1.0 > 1767268800);
+        assert!(*message.1.1.get("temperature").unwrap() != 0.0);
+        assert!(*message.1.1.get("sound").unwrap() != 0.0);
+        assert!(message.1.1.get("not_existing").is_none());
         assert_eq!(storage_rx.try_recv(), Err(TryRecvError::Empty));
 
         thread::sleep(Duration::from_millis(1010));
