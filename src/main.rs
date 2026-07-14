@@ -109,17 +109,20 @@ pub struct SensorDataEntry {
 }
 daq_engine::impl_daq_data_entry_trait!(SensorDataEntry);
 
-fn build_sensor_reader(name: String, wait_ms: u64, toleration_percentage: f32) -> daq_engine::SensorReader{
-    daq_engine::SensorReader {
-        name: name,
-        wait_ms: wait_ms,
-        function: random_float,
-        toleration_percentage: toleration_percentage
-    }
+fn read_sound_sensor() -> f32 {
+    fake_sensors::read_sensor(fake_sensors::SensorType::Sound)
 }
 
-fn random_float() -> f32 {
-    fake_sensors::read_sensor(fake_sensors::SensorType::Sound)
+fn read_temperature_sensor() -> f32 {
+    fake_sensors::read_sensor(fake_sensors::SensorType::Temperature)
+}
+
+fn read_humidity_sensor() -> f32 {
+    fake_sensors::read_sensor(fake_sensors::SensorType::Humidity)
+}
+
+fn read_light_sensor() -> f32 {
+    fake_sensors::read_sensor(fake_sensors::SensorType::Light)
 }
 
 fn start_sensor_data_aquisition_engine() {
@@ -127,9 +130,34 @@ fn start_sensor_data_aquisition_engine() {
         ts: 1767268800,
         attrs: HashMap::new()
     };
-    let sound_sensor_reader = build_sensor_reader("sound".to_string(), 100, 2.0);
-    let temperature_sensor_reader = build_sensor_reader("temperature".to_string(), 200, 0.01);
-    let sensor_readers = vec![sound_sensor_reader, temperature_sensor_reader];
+    let sound_sensor_reader = daq_engine::SensorReader {
+        name: "sound".to_string(),
+        wait_ms: 50,
+        function: read_sound_sensor,
+        toleration_percentage: 5.0
+    };
+    let temperature_sensor_reader = daq_engine::SensorReader {
+        name: "temperature".to_string(),
+        wait_ms: 60000,
+        function: read_temperature_sensor,
+        toleration_percentage: 0.01
+    };
+    let humidity_sensor_reader = daq_engine::SensorReader {
+        name: "humidity".to_string(),
+        wait_ms: 60000,
+        function: read_humidity_sensor,
+        toleration_percentage: 0.1
+    };
+    let light_sensor_reader = daq_engine::SensorReader {
+        name: "light".to_string(),
+        wait_ms: 500,
+        function: read_light_sensor,
+        toleration_percentage: 1.0
+    };
+    let sensor_readers = vec![sound_sensor_reader, 
+                             temperature_sensor_reader, 
+                             humidity_sensor_reader, 
+                             light_sensor_reader];
     let (storage_tx, storage_rx) = mpsc::channel();
 
     daq_engine::run(last_data_entry, sensor_readers, storage_tx);
