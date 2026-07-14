@@ -60,12 +60,13 @@ use crate::storage_class_trait::StorageClassTrait;
 
 pub trait StorageControllerTrait<SC: StorageClassTrait> {
     fn new(data_schema: Vec<String>, storage_class: SC, receiver: Receiver<(String, (u64, HashMap<String, f32>))>) -> Self;
+    fn update_headers(&self) -> Result<(), StorageError>;
     fn start_listening(&self, receiver: Receiver<(String, (u64, HashMap<String, f32>))>);
     fn process_message(message: (String, (u64, HashMap<String, f32>)), storage_mutex: &Arc<Mutex<SC>>, data_schema: &Vec<String>) -> Result<(), StorageError>;
     fn format_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>;
     // fn last_entry(&self) -> Result<DataEntry, StorageError>;
     fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError>;
-// //     fn purge(&self) -> Result<(), StorageError>;
+    // fn purge(&self) -> Result<(), StorageError>;
 }
 
 pub struct StorageController<SC: StorageClassTrait> {
@@ -79,9 +80,19 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
             storage_mutex: Arc::new(Mutex::new(storage_class)),
             data_schema
         };
-        // check if file contains header
+        instance.update_headers();
         instance.start_listening(receiver);
         instance
+    }
+
+    fn update_headers(&self) -> Result<(), StorageError> {
+        let mut storage = self.storage_mutex.lock()?;
+        let headers_line = self.data_schema.join(",");
+        if storage.lines_len()? > 0 {
+            storage.replace_line(headers_line, 0)
+        } else{
+            storage.append_line(headers_line)
+        }
     }
 
     fn start_listening(&self, receiver: Receiver<(String, (u64, HashMap<String, f32>))>){
@@ -117,6 +128,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
     fn format_payload_for_storage(timestamp: u64, payload: HashMap<String, f32>, data_schema: &Vec<String>) -> Result<String, StorageError>{
         let mut ordered_items = vec![timestamp.to_string()];
         for field in data_schema.iter(){
+            if field == "timestamp" { continue };
             match payload.get(field){
                 Some(val) => ordered_items.push(val.to_string()),
                 None => ordered_items.push("0.0".to_string())
@@ -131,7 +143,6 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,7 +156,7 @@ mod tests {
     fn test_saving_incoming_channel_messages() {
         let mut storage_class = VectorStorageClass::default();
         let (storage_tx, storage_rx) = mpsc::channel();
-        let data_schema = vec!["test".to_string(), "second".to_string(),];
+        let data_schema = vec!["timestamp".to_string(), "test".to_string(), "second".to_string(),];
         let storage_controller = StorageController::new(data_schema, storage_class, storage_rx);
         let test_message = ("save".to_string(),
                             (   TIMESTAMP, 
@@ -168,18 +179,15 @@ mod tests {
                             );
         storage_tx.send(test_message.clone());
 
-
         thread::sleep(Duration::from_millis(200));
 
         let storage_class = storage_controller.storage_mutex.lock().unwrap();
-        assert_eq!(storage_class.storage.len(), 3);
-        assert_eq!(storage_class.storage[0], "1767268800,1.2,0.0".to_string());
-        assert_eq!(storage_class.storage[1], "1767268800,0.0,2.8".to_string());
-        assert_eq!(storage_class.storage[2], "1767268800,1.2,2.8".to_string());
-        
-        dbg!(storage_class);
+        assert_eq!(storage_class.storage.len(), 4);
+        assert_eq!(storage_class.storage[0], "timestamp,test,second".to_string());
+        assert_eq!(storage_class.storage[1], "1767268800,1.2,0.0".to_string());
+        assert_eq!(storage_class.storage[2], "1767268800,0.0,2.8".to_string());
+        assert_eq!(storage_class.storage[3], "1767268800,1.2,2.8".to_string());
     }
-
 
     #[test]
     fn test_format_payload_success_all_fields_present() {
