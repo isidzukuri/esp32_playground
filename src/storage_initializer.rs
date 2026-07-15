@@ -2,9 +2,12 @@ use std::collections::HashMap;
 use std::sync::mpsc;
 use storage::*;
 
-pub fn run(
+pub fn run<SC>(
     storage_rx: mpsc::Receiver<(String, (u64, HashMap<String, f32>))>,
-) -> impl StorageControllerTrait<VectorStorageClass> {
+) -> impl StorageControllerTrait<SC>
+where
+    SC: StorageClassTrait + Default + Send + 'static
+{
     let data_schema = vec![
         "timestamp".to_string(),
         "temperature".to_string(),
@@ -13,7 +16,8 @@ pub fn run(
         "sound".to_string(),
     ];
 
-    let storage_class = VectorStorageClass::default();
+    let storage_class = SC::default(); 
+    
     StorageController::run(data_schema, storage_class, storage_rx)
         .expect("Failed to start StorageController")
 }

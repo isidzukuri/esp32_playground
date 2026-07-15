@@ -7,3 +7,4 @@ mod storage_error;
 pub use storage_controller::StorageController;
 pub use storage_classes::vector_storage_class::VectorStorageClass;
 pub use storage_controller_trait::StorageControllerTrait;
+pub use storage_class_trait::StorageClassTrait;

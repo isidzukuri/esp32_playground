@@ -16,11 +16,12 @@ mod dns;
 mod led;
 mod sd_card;
 mod top;
-mod web_server;
+// mod web_server;
 mod wifi_access_point;
 mod storage_initializer;
 mod daq_engine_initializer;
 
+use storage::VectorStorageClass;
 use storage::StorageControllerTrait;
 
 // mod threads_controller;
@@ -68,7 +69,7 @@ fn main() {
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
-    let storage_controller = storage_initializer::run(storage_rx);
+    let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx);
     println!("Storage initialized.");
 
     // println!("Initializing Data Acquisition Engine...");
@@ -78,7 +79,8 @@ fn main() {
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
-    let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
+    // let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
+    // let _server = web_server::start_web_server(&storage_controller).unwrap();
     println!("Web Server started.");
 
     // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {

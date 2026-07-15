@@ -48,6 +48,8 @@ impl StorageClassTrait for VectorStorageClass {
         &mut self,
         _reader: fn(_path: &'static str) -> (),
     ) -> Result<(), StorageError> {
+        
+        // let dynamic_csv_data: Vec<u8> = b"Name,Age\nAlice,30\nBob,25".to_vec();
         Err(StorageError::NotImplemented {
             method_name: "exec_file_reader".to_string(),
             entity: "VectorStorageClass".to_string(),

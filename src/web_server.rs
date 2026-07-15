@@ -22,8 +22,11 @@ const WS_MSG_MAX_LEN: usize = 1024;
 const MAX_OPEN_SOCKETS: usize = 4; // must match or be lower than CONFIG_LWIP_MAX_SOCKETS
 const MAX_SESSIONS: usize = 7;
 
+use storage::*;
+
+
 pub fn start_web_server(
-    log_path: &'static str,
+    storage_controller: &impl StorageControllerTrait<impl StorageClassTrait>
 ) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError> {
     let config = Configuration {
         max_open_sockets: MAX_OPEN_SOCKETS,
@@ -64,7 +67,7 @@ pub fn start_web_server(
     )?;
 
     // stream CSV (read in chunks so large files don't fill RAM)
-    let path = log_path.to_owned();
+    // let path = log_path.to_owned();
     server.fn_handler(
         "/data",
         Method::Get,
@@ -74,15 +77,15 @@ pub fn start_web_server(
 
 
             println!("[WebServer] -> /data");
-            println!("[WebServer] -> /data -> std::fs::File::open(&path)");
+            // println!("[WebServer] -> /data -> std::fs::File::open(&path)");
             
-            let mut file = match std::fs::File::open(&path) {
-                Ok(file) => file,
-                Err(_) => return Ok(()),
-            };
+            // let mut file = match std::fs::File::open(&path) {
+            //     Ok(file) => file,
+            //     Err(_) => return Ok(()),
+            // };
             println!("[WebServer] -> /data ->  start `stream_to_response`");
 
-            stream_to_response(file, &mut resp);
+            // stream_to_response(file, &mut resp);
 
             println!("[WebServer] -> /data - completion");
 
