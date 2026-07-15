@@ -78,6 +78,11 @@ impl StorageClassTrait for SdCardStorageClass {
         }
 
         writer.flush().unwrap();
+        drop(writer);
+
+        if path.exists() {
+            std::fs::remove_file(path).unwrap();
+        }
         std::fs::rename(temp_path, path).unwrap();
 
         Ok(())
