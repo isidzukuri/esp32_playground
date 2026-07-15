@@ -1,5 +1,6 @@
 use crate::storage_class_trait::StorageClassTrait;
 use crate::storage_error::StorageError;
+use crate::vector_string_reader::VecStringReader;
 
 #[derive(Default, Debug)]
 pub struct VectorStorageClass {
@@ -44,74 +45,14 @@ impl StorageClassTrait for VectorStorageClass {
         Ok(())
     }
 
-    // fn reader(
-    //     &mut self,
-    //     // _reader: fn(_path: &'static str) -> (),
     fn reader(&self) -> impl std::io::Read {
-        // let storage = vec!["string 1".to_string(), "string 2".to_string()];
-
         VecStringReader {
             data: &self.storage,
             index: 0,
             pos: 0,
         }
     }
-        // let dynamic_csv_data: Vec<u8> = b"Name,Age\nAlice,30\nBob,25".to_vec();
-        // Err(StorageError::NotImplemented {
-        //     method_name: "exec_file_reader".to_string(),
-        //     entity: "VectorStorageClass".to_string(),
-        // })
 }
-
-
-use std::io::{self, Read};
-
-struct VecStringReader<'a> {
-    data: &'a Vec<String>,
-    index: usize, // Which string we are currently reading
-    pos: usize,   // Position inside the current string
-}
-
-impl Read for VecStringReader<'_> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        if buf.is_empty() || self.index >= self.data.len() {
-            return Ok(0);
-        }
-
-        let mut bytes_written = 0;
-
-        while bytes_written < buf.len() && self.index < self.data.len() {
-            let current_str = &self.data[self.index];
-
-            if self.pos < current_str.len() {
-                let src = &current_str.as_bytes()[self.pos..];
-                let dest = &mut buf[bytes_written..];
-                
-                let amt = std::cmp::min(src.len(), dest.len());
-                dest[..amt].copy_from_slice(&src[..amt]);
-                
-                self.pos += amt;
-                bytes_written += amt;
-            } else {
-                if self.index + 1 < self.data.len() {
-                    buf[bytes_written] = b'\n';
-                    bytes_written += 1;
-                    
-                    self.index += 1;
-                    self.pos = 0;
-                } else {
-                    self.index += 1;
-                }
-            }
-        }
-
-        Ok(bytes_written)
-    }
-}
-
-
-
-
 
 #[cfg(test)]
 mod tests {
