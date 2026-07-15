@@ -77,7 +77,6 @@ fn main() {
     println!("Web Server started.");
 
     // TODO:
-    // - develop map-reduce for data before storage
     // - display js plot
     // - setup clock
     // - remove magic variables and hardcoded values
@@ -91,34 +90,3 @@ fn main() {
     }
 }
 
-
-// fn read_sd() {
-//     // 1. Mount the physical SD card
-//     let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
-
-//     // 2. Write a file using standard std::io error mapping
-//     println!("Writing data sample to file...");
-
-//     {
-//         let mut file = OpenOptions::new()
-//             .create(true) // create if not exists
-//             .append(true) // append to the end
-//             .open(SENSOR_DATA_LOG_PATH)
-//             .unwrap();
-
-//         // Write new lines at the end
-//         writeln!(file, "Timestamp,Sensor,Value").unwrap();
-//         writeln!(file, "171569420,Sound,42").unwrap();
-//         file.flush().unwrap(); // ensure data is written
-//         println!("File write successful!");
-//     }
-//     // --- Reading ---
-//     let file = File::open(SENSOR_DATA_LOG_PATH).unwrap();
-//     let reader = BufReader::new(file);
-
-//     for line in reader.lines() {
-//         let line = line.unwrap();
-//         println!("{}", line);
-//     }
-//     println!("File reading ended.");
-// }
