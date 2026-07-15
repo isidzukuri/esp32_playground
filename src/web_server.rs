@@ -72,21 +72,19 @@ pub fn start_web_server(
             let mut resp =
                 request.into_response(200, Some("OK"), &[("Content-Type", "text/csv")])?;
 
+
+            println!("[WebServer] -> /data");
+            println!("[WebServer] -> /data -> std::fs::File::open(&path)");
+            
             let mut file = match std::fs::File::open(&path) {
                 Ok(file) => file,
                 Err(_) => return Ok(()),
             };
+            println!("[WebServer] -> /data ->  start `stream_to_response`");
 
-            let mut buf = [0u8; 1024];
-            loop {
-                let itr = match file.read(&mut buf) {
-                    Ok(0) => break,
-                    Ok(itr) => itr,
-                    Err(_) => return Ok(()),
-                };
+            stream_to_response(file, &mut resp);
 
-                resp.write(&buf[..itr])?;
-            }
+            println!("[WebServer] -> /data - completion");
 
             Ok(())
         },
@@ -137,6 +135,28 @@ pub fn start_web_server(
     }
 
     Ok(Arc::new(server))
+}
+
+pub fn stream_to_response<R, C>(
+    mut reader: R, 
+    resp: &mut esp_idf_svc::http::server::Response<C>
+)
+where 
+    R: std::io::Read,
+    C: esp_idf_svc::http::server::Connection {
+
+    println!("[WebServer] -> stream_to_response");
+
+    let mut buf = [0u8; 1024];
+    loop {
+        let itr = match reader.read(&mut buf) {
+            Ok(0) => break,
+            Ok(itr) => itr,
+            Err(_) => return,
+        };
+        println!("[WebServer] -> stream_to_response -> loop: {}", &itr);
+        resp.write(&buf[..itr]).unwrap();
+    }
 }
 
 #[cfg(esp_idf_httpd_ws_support)]
