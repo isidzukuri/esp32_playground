@@ -33,6 +33,8 @@ const DEFAULT_TIMESTAMP: u64 = 1767268800; // Jan 1, 2026 12:00:00 UTC is 176726
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
+    use std::collections::HashMap;
+
     let peripherals = Peripherals::take().unwrap();
 
     // TODO: get timestamp from last data log entry
@@ -61,7 +63,8 @@ fn main() {
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
-    let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx);
+    let storage_options = HashMap::from([("path_to_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
+    let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx, storage_options);
     println!("Storage initialized.");
 
     println!("Initializing Data Acquisition Engine...");

@@ -1,13 +1,19 @@
 use crate::storage_class_trait::StorageClassTrait;
 use crate::storage_error::StorageError;
 use crate::vector_string_reader::VecStringReader;
+use std::collections::HashMap;
 
 #[derive(Default, Debug)]
 pub struct VectorStorageClass {
     pub storage: Vec<String>,
+    pub options: HashMap<String, String>,
 }
 
 impl StorageClassTrait for VectorStorageClass {
+    fn new(options: HashMap<String, String>) -> Self {
+        Self { options, ..Default::default()}
+    }
+
     fn append_line(&mut self, line: String) -> Result<(), StorageError> {
         self.storage.push(line);
         Ok(())
