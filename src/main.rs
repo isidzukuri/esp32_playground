@@ -62,16 +62,19 @@ fn main() {
     // - implement read whole fro VectorStorage
     // - implement SdStorage
 
+    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
+
+
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
     let storage_controller = storage_initializer::run(storage_rx);
     println!("Storage initialized.");
 
-    println!("Initializing Data Acquisition Engine...");
-    let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
-    daq_engine_initializer::run(storage_tx, last_entry_data);
-    println!("Data Acquisition Engine initialized.");
+    // println!("Initializing Data Acquisition Engine...");
+    // let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
+    // daq_engine_initializer::run(storage_tx, last_entry_data);
+    // println!("Data Acquisition Engine initialized.");
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
@@ -92,7 +95,7 @@ fn main() {
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
-        top::print_system_stats();
+        // top::print_system_stats();
         thread::sleep(Duration::from_millis(15000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
