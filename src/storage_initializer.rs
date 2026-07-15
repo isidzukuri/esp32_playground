@@ -4,7 +4,7 @@ use storage::*;
 
 pub fn run<StorageClass>(
     storage_rx: mpsc::Receiver<(String, (u64, HashMap<String, f32>))>,
-    options: HashMap<String, String>
+    options: HashMap<String, String>,
 ) -> impl StorageControllerTrait<StorageClass>
 where
     StorageClass: StorageClassTrait + Send + 'static,

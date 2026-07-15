@@ -20,9 +20,9 @@ mod web_server;
 mod wifi_access_point;
 // mod threads_controller;
 
+use storage::SdCardStorageClass;
 use storage::StorageControllerTrait;
 use storage::VectorStorageClass;
-use storage::SdCardStorageClass;
 
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
@@ -59,9 +59,13 @@ fn main() {
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
-    let storage_options = HashMap::from([("path_to_storage_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
-    let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx, storage_options);
-    println!("Storage initialized.");    
+    let storage_options = HashMap::from([(
+        "path_to_storage_file".to_string(),
+        SENSOR_DATA_LOG_PATH.to_string(),
+    )]);
+    let storage_controller =
+        storage_initializer::run::<VectorStorageClass>(storage_rx, storage_options);
+    println!("Storage initialized.");
 
     println!("Initializing Data Acquisition Engine...");
     let last_entry_data = storage_controller
@@ -90,4 +94,3 @@ fn main() {
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
-
