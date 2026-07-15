@@ -38,7 +38,6 @@ fn main() {
 
     let peripherals = Peripherals::take().unwrap();
 
-    // TODO: get timestamp from last data log entry
     clock::set_time(DEFAULT_TIMESTAMP);
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
@@ -62,12 +61,14 @@ fn main() {
     let (storage_tx, storage_rx) = mpsc::channel();
     let storage_options = HashMap::from([("path_to_storage_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
     let storage_controller = storage_initializer::run::<SdCardStorageClass>(storage_rx, storage_options);
-    println!("Storage initialized.");
+    println!("Storage initialized.");    
 
     println!("Initializing Data Acquisition Engine...");
     let last_entry_data = storage_controller
         .last_entry()
         .expect("Failed to read last data entry");
+    clock::set_time(last_entry_data.0);
+
     daq_engine_initializer::run(storage_tx, last_entry_data);
     println!("Data Acquisition Engine initialized.");
 
