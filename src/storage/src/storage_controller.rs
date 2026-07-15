@@ -132,6 +132,12 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         Ok(())
     }
 
+    fn purge(&self) -> Result<(), StorageError>{
+        let mut storage = self.storage_mutex.lock()?;
+        storage.purge()?;
+        Ok(())
+    }
+
     fn current_timestamp() -> u64 {
         let now = SystemTime::now();
         let since_the_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");

@@ -90,6 +90,25 @@ where
         },
     )?;
 
+    let locked_storage_controller = storage_controller.clone();
+    server.fn_handler(
+        "/data/purge",
+        Method::Get,
+        move |request| -> Result<(), EspIOError> {
+            let mut resp =
+                request.into_response(200, Some("OK"), &[("Content-Type", "text/html")])?;
+
+            println!("[WebServer] -> /data/purge");
+
+            let closure_storage_controller = locked_storage_controller.lock().unwrap();
+            closure_storage_controller
+                .purge()
+                .expect("[WebServer] storage controller purge error");
+
+            Ok(())
+        },
+    )?;
+
     // TODO: refactor WS code.
     #[cfg(esp_idf_httpd_ws_support)]
     {

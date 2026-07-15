@@ -27,5 +27,5 @@ pub trait StorageControllerTrait<SC: StorageClassTrait> {
     fn read_whole_storage<F>(&self, closure: F) -> Result<(), StorageError>
     where
         F: FnMut(&mut dyn std::io::Read);
-    // fn purge(&self) -> Result<(), StorageError>;
+    fn purge(&self) -> Result<(), StorageError>;
 }
