@@ -30,7 +30,12 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
     fn update_headers(&self) -> Result<(), StorageError> {
         let mut storage = self.storage_mutex.lock()?;
         let headers_line = self.data_schema.join(",");
+
         if storage.lines_len()? > 0 {
+            let current_headers_line = storage.read_line(0)?;
+            if current_headers_line == headers_line {
+                return Ok(());
+            }
             storage.replace_line(headers_line, 0)
         } else {
             storage.append_line(headers_line)
