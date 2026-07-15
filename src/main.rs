@@ -63,7 +63,7 @@ fn main() {
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
-    let storage_options = HashMap::from([("path_to_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
+    let storage_options = HashMap::from([("path_to_storage_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
     let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx, storage_options);
     println!("Storage initialized.");
 
@@ -100,7 +100,6 @@ fn main() {
     }
 }
 
-// use rand::RngExt;
 
 // fn read_sd() {
 //     // 1. Mount the physical SD card
