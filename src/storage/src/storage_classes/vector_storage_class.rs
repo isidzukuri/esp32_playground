@@ -57,6 +57,7 @@ impl StorageClassTrait for VectorStorageClass {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Read;
 
     #[test]
     fn test_append_line() {
@@ -127,18 +128,43 @@ mod tests {
     }
 
     #[test]
-    fn test_exec_file_reader() {
-        let mut instance = VectorStorageClass::default();
-        fn test_fn(_path: &'static str) -> () {
-            ()
-        }
+    fn test_reader_empty_storage() {
+        let storage_class = VectorStorageClass::default();
+        let mut reader = storage_class.reader();
+        
+        let mut output = String::new();
+        let bytes_read = reader.read_to_string(&mut output).unwrap();
+        
+        assert_eq!(bytes_read, 0);
+        assert_eq!(output, "");
+    }
 
-        assert_eq!(
-            instance.exec_file_reader(test_fn),
-            Err(StorageError::NotImplemented {
-                method_name: "exec_file_reader".to_string(),
-                entity: "VectorStorageClass".to_string(),
-            })
-        );
+    #[test]
+    fn test_reader_single_line() {
+        let mut storage_class = VectorStorageClass::default();
+        storage_class.append_line("Hello World".to_string()).unwrap();
+        
+        let mut reader = storage_class.reader();
+        let mut output = String::new();
+        let bytes_read = reader.read_to_string(&mut output).unwrap();
+        
+        assert_eq!(bytes_read, 11);
+        assert_eq!(output, "Hello World");
+    }
+
+    #[test]
+    fn test_reader_multiple_lines() {
+        let mut storage_class = VectorStorageClass::default();
+        storage_class.append_line("Line 1".to_string()).unwrap();
+        storage_class.append_line("Line 2".to_string()).unwrap();
+        storage_class.append_line("Line 3".to_string()).unwrap();
+        
+        let mut reader = storage_class.reader();
+        let mut output = String::new();
+        let bytes_read = reader.read_to_string(&mut output).unwrap();
+        
+        // "Line 1\nLine 2\nLine 3" -> 6 + 1 + 6 + 1 + 6 = 20 bytes
+        assert_eq!(bytes_read, 20);
+        assert_eq!(output, "Line 1\nLine 2\nLine 3");
     }
 }
