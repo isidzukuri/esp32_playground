@@ -6,7 +6,6 @@ use std::sync::mpsc::Receiver;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::io::Read;
 
 pub struct StorageController<SC: StorageClassTrait> {
     pub storage_mutex: Arc<Mutex<SC>>,
@@ -123,7 +122,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
     where
         F: FnMut(&mut dyn std::io::Read)
     {
-        let mut storage = self.storage_mutex.lock()?;
+        let storage = self.storage_mutex.lock()?;
         closure(&mut storage.reader());
         Ok(())
     }

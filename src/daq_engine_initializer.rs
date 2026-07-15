@@ -1,5 +1,3 @@
-use fake_sensors::*;
-
 use daq_engine;
 use daq_engine::DataEntryTrait;
 use std::collections::HashMap;

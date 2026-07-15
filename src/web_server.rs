@@ -1,7 +1,6 @@
 use embedded_svc::http::Method;
 use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use esp_idf_svc::io::EspIOError;
-use std::io::Read;
 use std::str;
 use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;

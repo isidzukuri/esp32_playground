@@ -1,5 +1,3 @@
-use rand::RngExt;
-
 pub enum SensorType {
     Sound,
     Temperature,

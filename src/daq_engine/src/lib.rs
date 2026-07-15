@@ -6,7 +6,6 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc;
 use std::thread;
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 mod sensor_reader;

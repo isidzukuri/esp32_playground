@@ -5,8 +5,6 @@ use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, alway
 
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::peripherals::Peripherals;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -22,7 +20,6 @@ mod web_server;
 mod wifi_access_point;
 // mod threads_controller;
 
-use storage::StorageController;
 use storage::StorageControllerTrait;
 use storage::VectorStorageClass;
 
@@ -60,7 +57,7 @@ fn main() {
     // TODO:
     // - implement SdStorage
 
-    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
+    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH);
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
