@@ -65,11 +65,11 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
                     Err(TryRecvError::Empty) => { 
                         if updated {
                             let serialized_entry = data_entry.for_storage_channel();
-                            println!("[DaqEngine] Saving data to the storage: {:?}", &serialized_entry);
+                            // println!("[DaqEngine] Saving data to the storage: {:?}", &serialized_entry);
                             let _ = storage_chnl.send(("save".to_string(), serialized_entry));
                             updated = false;
                         }
-                        println!("[DaqEngine] Waiting for new data");
+                        // println!("[DaqEngine] Waiting for new data");
                         break;
                     },
                     Err(TryRecvError::Disconnected) => { panic!("[DaqEngine] Error: all Senders have been dropped!"); }
