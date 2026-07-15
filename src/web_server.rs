@@ -21,7 +21,7 @@ const WS_MSG_MAX_LEN: usize = 1024;
 const MAX_OPEN_SOCKETS: usize = 4; // must match or be lower than CONFIG_LWIP_MAX_SOCKETS
 const MAX_SESSIONS: usize = 7;
 
-pub fn start_web_server<StorageClass, Controller>(
+pub fn run<StorageClass, Controller>(
     storage_controller: Arc<Mutex<Controller>>,
 ) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError>
 where

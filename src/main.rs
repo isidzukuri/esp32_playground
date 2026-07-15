@@ -78,7 +78,7 @@ fn main() {
     // start web server (keep Arc to keep server alive)
     // let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
     // let _server = web_server::start_web_server::<VectorStorageClass, StorageController>(Arc::new(Mutex::new(storage_controller))).unwrap();
-    let _server = web_server::start_web_server(Arc::new(Mutex::new(storage_controller))).unwrap();
+    let _server = web_server::run(Arc::new(Mutex::new(storage_controller))).unwrap();
     println!("Web Server started.");
 
     // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {

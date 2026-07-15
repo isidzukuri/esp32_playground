@@ -5,7 +5,9 @@ mod storage_controller_trait;
 mod storage_error;
 mod vector_string_reader;
 
+pub use storage_class_trait::StorageClassTrait;
+pub use storage_controller_trait::StorageControllerTrait;
+
 pub use storage_controller::StorageController;
 pub use storage_classes::vector_storage_class::VectorStorageClass;
-pub use storage_controller_trait::StorageControllerTrait;
-pub use storage_class_trait::StorageClassTrait;
+pub use storage_classes::sd_card_storage_class::SdCardStorageClass;
