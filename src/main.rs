@@ -58,7 +58,6 @@ fn main() {
     let _dns = dns::initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
     // TODO:
-    // - implement read whole fro VectorStorage
     // - implement SdStorage
 
     let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();

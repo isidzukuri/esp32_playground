@@ -3,8 +3,6 @@ use crate::storage_error::StorageError;
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
-// use std::io::Read;
-// use esp_idf_svc::http::server;
 
 pub trait StorageControllerTrait<SC: StorageClassTrait> {
     fn run(
