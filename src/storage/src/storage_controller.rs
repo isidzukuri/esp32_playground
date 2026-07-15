@@ -47,7 +47,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         let data_schema = self.data_schema.clone();
         thread::spawn(move || {
             for message in receiver {
-                println!("[StorageController] Worker woke up! Processing: {:?}", message);
+                // println!("[StorageController] Worker woke up! Processing: {:?}", message);
                 if let Err(e) = Self::process_message(message, &storage_mutex, &data_schema) {
                     panic!("Error processing message in background thread: {}", e);
                 }

@@ -37,7 +37,7 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
             loop {
                 match rx.try_recv() {
                     Ok((sensor_name, new_value)) => {
-                        println!("[DaqEngine] Incoming data: {} = {}", sensor_name, new_value);
+                        // println!("[DaqEngine] Incoming data: {} = {}", sensor_name, new_value);
 
                         let baseline_value = data_entry.attrs().get(&sensor_name).copied().unwrap_or(0.0).abs();
                         let current_deviation = (new_value.abs() - baseline_value).abs();
@@ -45,7 +45,7 @@ fn spawn_data_logger(rx: Receiver<(String, f32)>, mut data_entry: impl DataEntry
 
                         if current_deviation > *highest_deviation {
                             *highest_deviation = current_deviation;
-                            println!("[DaqEngine] New highest deviation for {}: {}", sensor_name, current_deviation);
+                            // println!("[DaqEngine] New highest deviation for {}: {}", sensor_name, current_deviation);
                             
                             highest_deviations
                                 .entry(sensor_name.clone())

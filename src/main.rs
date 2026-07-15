@@ -85,7 +85,7 @@ fn main() {
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp());
-        // top::print_system_stats();
+        top::print_system_stats();
         thread::sleep(Duration::from_millis(15000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
