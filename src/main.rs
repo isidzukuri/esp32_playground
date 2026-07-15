@@ -20,17 +20,13 @@ mod web_server;
 mod wifi_access_point;
 mod storage_initializer;
 mod daq_engine_initializer;
+// mod threads_controller;
 
 use storage::VectorStorageClass;
 use storage::StorageControllerTrait;
 use storage::StorageController;
 
 
-
-pub use esp_idf_svc;
-// mod threads_controller;
-
-// use fake_sensors::*;
 
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";

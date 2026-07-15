@@ -69,7 +69,6 @@ where
     )?;
 
     // stream CSV (read in chunks so large files don't fill RAM)
-    // let path = log_path.to_owned();
     let locked_storage_controller = storage_controller.clone();
     server.fn_handler(
         "/data",
@@ -78,36 +77,13 @@ where
             let mut resp =
                 request.into_response(200, Some("OK"), &[("Content-Type", "text/csv")])?;
 
-
             println!("[WebServer] -> /data");
-            // println!("[WebServer] -> /data -> std::fs::File::open(&path)");
-            
-            // let mut file = match std::fs::File::open(&path) {
-            //     Ok(file) => file,
-            //     Err(_) => return Ok(()),
-            // };
-            println!("[WebServer] -> /data ->  start `stream_to_response`");
 
-            // fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError>;
-            
-
-// pub fn stream_to_response<R, C>(
-//     mut reader: R, 
-//     resp: &mut esp_idf_svc::http::server::Response<C>
-// )
-// where 
-//     R: std::io::Read,
-//     C: esp_idf_svc::http::server::Connection {
-
-            // storage_controller.read_whole_storage(stream_to_response).unwrap();
             let closure_storage_controller = locked_storage_controller.lock().unwrap();
 
             closure_storage_controller.read_whole_storage(|reader| {
               stream_to_response(reader, &mut resp);
             });
-
-            // stream_to_response(file, &mut resp);
-
             println!("[WebServer] -> /data - completion");
 
             Ok(())
@@ -168,9 +144,7 @@ pub fn stream_to_response<R, C>(
 where 
     R: std::io::Read,
     C: esp_idf_svc::http::server::Connection {
-
-    println!("[WebServer] -> stream_to_response");
-
+    // println!("[WebServer] -> stream_to_response");
     let mut buf = [0u8; 1024];
     loop {
         let itr = match reader.read(&mut buf) {
@@ -178,7 +152,7 @@ where
             Ok(itr) => itr,
             Err(_) => return,
         };
-        println!("[WebServer] -> stream_to_response -> loop: {}", &itr);
+        // println!("[WebServer] -> stream_to_response -> loop: {}", &itr);
         resp.write(&buf[..itr]).unwrap();
     }
 }

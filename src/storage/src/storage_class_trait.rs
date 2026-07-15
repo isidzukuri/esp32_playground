@@ -6,11 +6,6 @@ pub trait StorageClassTrait {
     fn read_line(&self, line_number: usize) -> Result<String, StorageError>;
     fn lines_len(&self) -> Result<usize, StorageError>;
     fn purge(&mut self) -> Result<(), StorageError>;
-    // fn exec_file_reader(
-    //     &mut self,
-    //     reader: fn(path: &'static str) -> (),
-    // ) -> Result<(), StorageError>;
-
     fn reader(&self) -> impl std::io::Read;
 }
 
