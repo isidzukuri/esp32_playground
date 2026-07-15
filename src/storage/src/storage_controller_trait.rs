@@ -26,7 +26,7 @@ pub trait StorageControllerTrait<SC: StorageClassTrait> {
     ) -> Result<String, StorageError>;
     fn last_entry(&self) -> Result<(u64, HashMap<String, f32>), StorageError>;
     fn current_timestamp() -> u64;
-    fn read_whole_storage<F>(&self, closure: F)
+    fn read_whole_storage<F>(&self, closure: F) -> Result<(), StorageError>
     where
         F: FnMut(&mut dyn std::io::Read);
     // fn purge(&self) -> Result<(), StorageError>;

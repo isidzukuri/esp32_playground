@@ -83,7 +83,7 @@ where
 
             closure_storage_controller.read_whole_storage(|reader| {
               stream_to_response(reader, &mut resp);
-            });
+            }).expect("[WebServer] storage controller closure error");
             println!("[WebServer] -> /data - completion");
 
             Ok(())
@@ -153,7 +153,7 @@ where
             Err(_) => return,
         };
         // println!("[WebServer] -> stream_to_response -> loop: {}", &itr);
-        resp.write(&buf[..itr]).unwrap();
+        resp.write(&buf[..itr]).expect("[WebServer] stream_to_response write failure.");
     }
 }
 

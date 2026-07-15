@@ -119,12 +119,13 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         Ok((timestamp, attrs))
     }
 
-    fn read_whole_storage<F>(&self, mut closure: F)
+    fn read_whole_storage<F>(&self, mut closure: F) -> Result<(), StorageError>
     where
         F: FnMut(&mut dyn std::io::Read)
     {
-        let mut storage = self.storage_mutex.lock().unwrap();
+        let mut storage = self.storage_mutex.lock()?;
         closure(&mut storage.reader());
+        Ok(())
     }
 
     fn current_timestamp() -> u64 {
