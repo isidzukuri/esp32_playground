@@ -5,8 +5,8 @@ use std::io::Read;
 use std::str;
 use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
-use storage::StorageControllerTrait;
 use storage::StorageClassTrait;
+use storage::StorageControllerTrait;
 
 #[cfg(esp_idf_httpd_ws_support)]
 use embedded_svc::ws::FrameType;
@@ -23,13 +23,12 @@ const MAX_OPEN_SOCKETS: usize = 4; // must match or be lower than CONFIG_LWIP_MA
 const MAX_SESSIONS: usize = 7;
 
 pub fn start_web_server<StorageClass, Controller>(
-    storage_controller: Arc<Mutex<Controller>> 
-) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError> 
+    storage_controller: Arc<Mutex<Controller>>,
+) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError>
 where
     StorageClass: StorageClassTrait + Default + Send + 'static,
     Controller: StorageControllerTrait<StorageClass> + std::marker::Sync + Send + 'static, // Ensure Controller is 'static and Send
-    {
-
+{
     let config = Configuration {
         max_open_sockets: MAX_OPEN_SOCKETS,
         max_sessions: MAX_SESSIONS,
@@ -81,9 +80,11 @@ where
 
             let closure_storage_controller = locked_storage_controller.lock().unwrap();
 
-            closure_storage_controller.read_whole_storage(|reader| {
-              stream_to_response(reader, &mut resp);
-            }).expect("[WebServer] storage controller closure error");
+            closure_storage_controller
+                .read_whole_storage(|reader| {
+                    stream_to_response(reader, &mut resp);
+                })
+                .expect("[WebServer] storage controller closure error");
             println!("[WebServer] -> /data - completion");
 
             Ok(())
@@ -137,13 +138,11 @@ where
     Ok(Arc::new(server))
 }
 
-pub fn stream_to_response<R, C>(
-    mut reader: R, 
-    resp: &mut esp_idf_svc::http::server::Response<C>
-)
-where 
+pub fn stream_to_response<R, C>(mut reader: R, resp: &mut esp_idf_svc::http::server::Response<C>)
+where
     R: std::io::Read,
-    C: esp_idf_svc::http::server::Connection {
+    C: esp_idf_svc::http::server::Connection,
+{
     // println!("[WebServer] -> stream_to_response");
     let mut buf = [0u8; 1024];
     loop {
@@ -153,7 +152,8 @@ where
             Err(_) => return,
         };
         // println!("[WebServer] -> stream_to_response -> loop: {}", &itr);
-        resp.write(&buf[..itr]).expect("[WebServer] stream_to_response write failure.");
+        resp.write(&buf[..itr])
+            .expect("[WebServer] stream_to_response write failure.");
     }
 }
 

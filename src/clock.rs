@@ -1,12 +1,12 @@
-use esp_idf_sys::{timeval, settimeofday};
-use std::time::{SystemTime, Duration};
+use esp_idf_sys::{settimeofday, timeval};
+use std::time::{Duration, SystemTime};
 
-pub fn set_time(start_timestamp_secs: u64){
+pub fn set_time(start_timestamp_secs: u64) {
     let tv = timeval {
         tv_sec: start_timestamp_secs as _,
         tv_usec: 0,
     };
-    
+
     // Safety: settimeofday updates the ESP-IDF standard POSIX clock
     unsafe {
         settimeofday(&tv, std::ptr::null());

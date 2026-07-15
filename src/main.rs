@@ -5,28 +5,26 @@ use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, alway
 
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::peripherals::Peripherals;
-use std::thread;
-use std::time::Duration;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 mod clock;
+mod daq_engine_initializer;
 mod dns;
 mod led;
 mod sd_card;
+mod storage_initializer;
 mod top;
 mod web_server;
 mod wifi_access_point;
-mod storage_initializer;
-mod daq_engine_initializer;
 // mod threads_controller;
 
-use storage::VectorStorageClass;
-use storage::StorageControllerTrait;
 use storage::StorageController;
-
-
+use storage::StorageControllerTrait;
+use storage::VectorStorageClass;
 
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
@@ -65,15 +63,15 @@ fn main() {
 
     let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
 
-
-
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
     let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx);
     println!("Storage initialized.");
 
     println!("Initializing Data Acquisition Engine...");
-    let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
+    let last_entry_data = storage_controller
+        .last_entry()
+        .expect("Failed to read last data entry");
     daq_engine_initializer::run(storage_tx, last_entry_data);
     println!("Data Acquisition Engine initialized.");
 
@@ -95,15 +93,13 @@ fn main() {
     // - remove magic variables and hardcoded values
     // - add tests
 
-
     loop {
-        println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
+        println!("Heartbeat. TS: {}", clock::get_current_timestamp());
         // top::print_system_stats();
         thread::sleep(Duration::from_millis(15000));
         //     // println!("Sound. ADC value: {}", adc.read(&mut adc_pin).unwrap());
     }
 }
-
 
 // use rand::RngExt;
 
@@ -137,5 +133,3 @@ fn main() {
 //     }
 //     println!("File reading ended.");
 // }
-
-
