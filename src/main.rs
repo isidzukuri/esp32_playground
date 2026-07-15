@@ -9,6 +9,7 @@ use std::thread;
 use std::time::Duration;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
+use std::sync::mpsc;
 
 mod clock;
 mod dns;
@@ -16,6 +17,11 @@ mod sd_card;
 mod top;
 mod web_server;
 mod wifi_access_point;
+mod storage_initializer;
+mod daq_engine_initializer;
+
+use storage::StorageControllerTrait;
+
 // mod threads_controller;
 
 // use fake_sensors::*;
@@ -59,25 +65,15 @@ fn main() {
     // - implement SdStorage
 
 
+    println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
+    let storage_controller = storage_initializer::run(storage_rx);
+    println!("Storage initialized.");
 
-    let data_schema = vec!["timestamp".to_string(),
-                            "temperature".to_string(),
-                            "humidity".to_string(),
-                            "light".to_string(),
-                            "sound".to_string()];
-
-    let storage_class = VectorStorageClass::default();
-    let storage_controller = StorageController::run(data_schema, storage_class, storage_rx).expect("Failed to start StorageController");
-
+    println!("Initializing Data Acquisition Engine...");
     let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
-    
-    let last_data_entry = SensorDataEntry {
-        ts: last_entry_data.0,
-        attrs: last_entry_data.1
-    };
-
-    start_sensor_data_aquisition_engine(storage_tx, last_data_entry);
+    daq_engine_initializer::run(storage_tx, last_entry_data);
+    println!("Data Acquisition Engine initialized.");
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
@@ -105,84 +101,7 @@ fn main() {
 }
 
 
-
-// pub struct SensorsDataEntry {
-//     ts: u64,
-//     sound: f32,
-//     temperature: f32,
-//     humidity: f32,
-//     light: f32,
-// }
-
 // use rand::RngExt;
-use fake_sensors::*;
-
-use std::collections::HashMap;
-use std::sync::mpsc;
-use daq_engine;
-use daq_engine::DataEntryTrait;
-use storage::*;
-// use storage::StorageController;
-// use storage::VectorStorageClass;
-
-
-
-#[derive(Default, Debug)]
-pub struct SensorDataEntry {
-    ts: u64,
-    attrs: HashMap<String, f32>,
-}
-daq_engine::impl_daq_data_entry_trait!(SensorDataEntry);
-
-fn read_sound_sensor() -> f32 {
-    fake_sensors::read_sensor(fake_sensors::SensorType::Sound)
-}
-
-fn read_temperature_sensor() -> f32 {
-    fake_sensors::read_sensor(fake_sensors::SensorType::Temperature)
-}
-
-fn read_humidity_sensor() -> f32 {
-    fake_sensors::read_sensor(fake_sensors::SensorType::Humidity)
-}
-
-fn read_light_sensor() -> f32 {
-    fake_sensors::read_sensor(fake_sensors::SensorType::Light)
-}
-
-fn start_sensor_data_aquisition_engine(storage_tx: mpsc::Sender<(String, (u64, HashMap<String, f32>))>, last_data_entry: SensorDataEntry) {
-    let sound_sensor_reader = daq_engine::SensorReader {
-        name: "sound".to_string(),
-        wait_ms: 50,
-        function: read_sound_sensor,
-        toleration: 0.05
-    };
-    let temperature_sensor_reader = daq_engine::SensorReader {
-        name: "temperature".to_string(),
-        wait_ms: 60000,
-        function: read_temperature_sensor,
-        toleration: 0.001
-    };
-    let humidity_sensor_reader = daq_engine::SensorReader {
-        name: "humidity".to_string(),
-        wait_ms: 60000,
-        function: read_humidity_sensor,
-        toleration: 0.001
-    };
-    let light_sensor_reader = daq_engine::SensorReader {
-        name: "light".to_string(),
-        wait_ms: 500,
-        function: read_light_sensor,
-        toleration: 0.01
-    };
-    let sensor_readers = vec![sound_sensor_reader, 
-                             temperature_sensor_reader, 
-                             humidity_sensor_reader, 
-                             light_sensor_reader];
-
-    daq_engine::run(last_data_entry, sensor_readers, storage_tx);
-}
-
 
 // fn read_sd() {
 //     // 1. Mount the physical SD card

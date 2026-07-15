@@ -1,5 +1,4 @@
 // DaqEngine (DataAcquisitionEngine)
-
 // TODO: split into files
 
 use std::collections::HashMap;
@@ -16,13 +15,6 @@ mod data_entry_trait;
 pub use crate::sensor_reader::SensorReader;
 pub use crate::data_entry_trait::*;
 
-
-// pub trait DataStorageTrait {
-//     fn append(&self) -> &u64;
-//     fn attrs(&self) -> &HashMap<String, f32>;
-// }
-
-
 const DEFAULT_LOGGER_WAIT_MS: u64 = 1000;
 
 pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static, 
@@ -33,9 +25,6 @@ pub fn run(mut last_data_entry: impl DataEntryTrait + Send + 'static,
 
     spawn_sensor_readers(tx, &mut last_data_entry, sensor_readers);
     spawn_data_logger(rx, last_data_entry, storage_chnl);
-
-    // storage
-        // must be method with mutex
 }
 
 // Saves data to storage only if differ from last entry
