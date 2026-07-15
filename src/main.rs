@@ -13,6 +13,7 @@ use std::sync::mpsc;
 
 mod clock;
 mod dns;
+mod led;
 mod sd_card;
 mod top;
 mod web_server;
@@ -42,7 +43,7 @@ fn main() {
     clock::set_time(DEFAULT_TIMESTAMP);
 
     let mut led = PinDriver::output(peripherals.pins.gpio21).unwrap();
-    led_hello(&mut led);
+    led::hello(&mut led);
 
     println!("Initializing Wi-Fi Access Point...");
     let wifi = wifi_access_point::init_ap(
@@ -57,10 +58,7 @@ fn main() {
 
     let _dns = dns::initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
-
-
     // TODO:
-    // - build with Storage module
     // - implement read whole fro VectorStorage
     // - implement SdStorage
 
@@ -134,21 +132,4 @@ fn main() {
 //     println!("File reading ended.");
 // }
 
-fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>) {
-    led.set_low().unwrap();
 
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_high().unwrap();
-    thread::sleep(Duration::from_millis(300));
-    led.set_low().unwrap();
-    thread::sleep(Duration::from_millis(300));
-
-    led.set_high().unwrap();
-}
