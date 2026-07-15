@@ -22,6 +22,7 @@ mod wifi_access_point;
 
 use storage::StorageControllerTrait;
 use storage::VectorStorageClass;
+use storage::SdCardStorageClass;
 
 const SD_CARD_MOUNT_PATH: &str = "/sdcard";
 const SENSOR_DATA_LOG_PATH: &str = "/sdcard/log.csv";
@@ -55,16 +56,12 @@ fn main() {
     );
 
     let _dns = dns::initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
-
-    // TODO:
-    // - implement SdStorage
-
     let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH);
 
     println!("Initializing Storage...");
     let (storage_tx, storage_rx) = mpsc::channel();
     let storage_options = HashMap::from([("path_to_storage_file".to_string(), SENSOR_DATA_LOG_PATH.to_string() )]);
-    let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx, storage_options);
+    let storage_controller = storage_initializer::run::<SdCardStorageClass>(storage_rx, storage_options);
     println!("Storage initialized.");
 
     println!("Initializing Data Acquisition Engine...");
@@ -76,14 +73,8 @@ fn main() {
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
-    // let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
-    // let _server = web_server::start_web_server::<VectorStorageClass, StorageController>(Arc::new(Mutex::new(storage_controller))).unwrap();
     let _server = web_server::run(Arc::new(Mutex::new(storage_controller))).unwrap();
     println!("Web Server started.");
-
-    // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {
-    // read_sd();
-    // });
 
     // TODO:
     // - develop map-reduce for data before storage
