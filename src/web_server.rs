@@ -95,7 +95,7 @@ where
         "/data/purge",
         Method::Get,
         move |request| -> Result<(), EspIOError> {
-            let mut resp =
+            let mut _resp =
                 request.into_response(200, Some("OK"), &[("Content-Type", "text/html")])?;
 
             println!("[WebServer] -> /data/purge");

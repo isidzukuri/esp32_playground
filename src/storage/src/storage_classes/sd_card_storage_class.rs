@@ -1,10 +1,9 @@
 use crate::storage_class_trait::StorageClassTrait;
 use crate::storage_error::StorageError;
-use crate::vector_string_reader::VecStringReader;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 
 // TODO: handle errors. Do not use unwrap and expect
 
