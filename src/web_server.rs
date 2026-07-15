@@ -3,8 +3,10 @@ use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use esp_idf_svc::io::EspIOError;
 use std::io::Read;
 use std::str;
-use std::sync::{mpsc::channel, Arc};
+use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
+use storage::StorageControllerTrait;
+use storage::StorageClassTrait;
 
 #[cfg(esp_idf_httpd_ws_support)]
 use embedded_svc::ws::FrameType;
@@ -12,8 +14,6 @@ use embedded_svc::ws::FrameType;
 use esp_idf_svc::sys::EspError;
 #[cfg(esp_idf_httpd_ws_support)]
 use std::collections::BTreeMap;
-#[cfg(esp_idf_httpd_ws_support)]
-use std::sync::Mutex;
 
 const INDEX_HTML: &str = include_str!("assets/index.html");
 const SCRIPTS_JS: &str = include_str!("assets/scripts.js");
@@ -22,12 +22,14 @@ const WS_MSG_MAX_LEN: usize = 1024;
 const MAX_OPEN_SOCKETS: usize = 4; // must match or be lower than CONFIG_LWIP_MAX_SOCKETS
 const MAX_SESSIONS: usize = 7;
 
-use storage::*;
+pub fn start_web_server<StorageClass, Controller>(
+    storage_controller: Arc<Mutex<Controller>> 
+) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError> 
+where
+    StorageClass: StorageClassTrait + Default + Send + 'static,
+    Controller: StorageControllerTrait<StorageClass> + std::marker::Sync + Send + 'static, // Ensure Controller is 'static and Send
+    {
 
-
-pub fn start_web_server(
-    storage_controller: &impl StorageControllerTrait<impl StorageClassTrait>
-) -> std::result::Result<Arc<EspHttpServer<'static>>, EspIOError> {
     let config = Configuration {
         max_open_sockets: MAX_OPEN_SOCKETS,
         max_sessions: MAX_SESSIONS,
@@ -68,6 +70,7 @@ pub fn start_web_server(
 
     // stream CSV (read in chunks so large files don't fill RAM)
     // let path = log_path.to_owned();
+    let locked_storage_controller = storage_controller.clone();
     server.fn_handler(
         "/data",
         Method::Get,
@@ -84,6 +87,24 @@ pub fn start_web_server(
             //     Err(_) => return Ok(()),
             // };
             println!("[WebServer] -> /data ->  start `stream_to_response`");
+
+            // fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError>;
+            
+
+// pub fn stream_to_response<R, C>(
+//     mut reader: R, 
+//     resp: &mut esp_idf_svc::http::server::Response<C>
+// )
+// where 
+//     R: std::io::Read,
+//     C: esp_idf_svc::http::server::Connection {
+
+            // storage_controller.read_whole_storage(stream_to_response).unwrap();
+            let closure_storage_controller = locked_storage_controller.lock().unwrap();
+
+            closure_storage_controller.read_whole_storage(|reader| {
+              stream_to_response(reader, &mut resp);
+            });
 
             // stream_to_response(file, &mut resp);
 

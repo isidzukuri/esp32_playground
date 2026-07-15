@@ -9,21 +9,25 @@ use std::thread;
 use std::time::Duration;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 
 mod clock;
 mod dns;
 mod led;
 mod sd_card;
 mod top;
-// mod web_server;
+mod web_server;
 mod wifi_access_point;
 mod storage_initializer;
 mod daq_engine_initializer;
 
 use storage::VectorStorageClass;
 use storage::StorageControllerTrait;
+use storage::StorageController;
 
+
+
+pub use esp_idf_svc;
 // mod threads_controller;
 
 // use fake_sensors::*;
@@ -72,15 +76,16 @@ fn main() {
     let storage_controller = storage_initializer::run::<VectorStorageClass>(storage_rx);
     println!("Storage initialized.");
 
-    // println!("Initializing Data Acquisition Engine...");
-    // let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
-    // daq_engine_initializer::run(storage_tx, last_entry_data);
-    // println!("Data Acquisition Engine initialized.");
+    println!("Initializing Data Acquisition Engine...");
+    let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
+    daq_engine_initializer::run(storage_tx, last_entry_data);
+    println!("Data Acquisition Engine initialized.");
 
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
     // let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
-    // let _server = web_server::start_web_server(&storage_controller).unwrap();
+    // let _server = web_server::start_web_server::<VectorStorageClass, StorageController>(Arc::new(Mutex::new(storage_controller))).unwrap();
+    let _server = web_server::start_web_server(Arc::new(Mutex::new(storage_controller))).unwrap();
     println!("Web Server started.");
 
     // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {

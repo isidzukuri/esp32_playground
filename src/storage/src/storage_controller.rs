@@ -6,6 +6,7 @@ use std::sync::mpsc::Receiver;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::io::Read;
 
 pub struct StorageController<SC: StorageClassTrait> {
     pub storage_mutex: Arc<Mutex<SC>>,
@@ -118,9 +119,24 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         Ok((timestamp, attrs))
     }
 
-    fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError> {
-        let mut storage = self.storage_mutex.lock()?;
-        storage.exec_file_reader(reader)
+    // fn read_whole_storage(&self, reader: fn(path: &'static str) -> ()) -> Result<(), StorageError> {
+    // // fn read_whole_storage(&self, reader: &mut dyn Read) -> Result<(), StorageError> {
+    //     let mut storage = self.storage_mutex.lock()?;
+    //     // storage.exec_file_reader(reader)
+    //     Ok(())
+    // }
+
+    fn read_whole_storage<F>(&self, mut closure: F)
+    where
+        F: FnMut(&mut dyn std::io::Read)
+    {
+        let mut storage = self.storage_mutex.lock().unwrap();
+
+        // Call the closure and pass the reader into it
+        closure(&mut storage.reader());
+
+        
+        // Ok(())
     }
 
     fn current_timestamp() -> u64 {
