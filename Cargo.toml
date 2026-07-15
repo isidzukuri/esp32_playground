@@ -18,6 +18,7 @@ heapless = "0.8"
 
 fake_sensors = { path = "./src/fake_sensors" }
 daq_engine = { path = "./src/daq_engine" }
+storage = { path = "./src/storage" }
 
 [features]
 default = ["adc-oneshot-legacy"]

@@ -51,29 +51,50 @@ fn main() {
 
     let _dns = dns::initialize_dns(DNS_DEFAULT_HOSTNAME, DNS_DEFAULT_INSTANCE_NAME);
 
+
+
+    // TODO:
+    // - build with Storage module
+    // - implement read whole fro VectorStorage
+    // - implement SdStorage
+
+
+    let (storage_tx, storage_rx) = mpsc::channel();
+
+    let data_schema = vec!["timestamp".to_string(),
+                            "temperature".to_string(),
+                            "humidity".to_string(),
+                            "light".to_string(),
+                            "sound".to_string()];
+
+    let storage_class = VectorStorageClass::default();
+    let storage_controller = StorageController::run(data_schema, storage_class, storage_rx).expect("Failed to start StorageController");
+
+    let last_entry_data = storage_controller.last_entry().expect("Failed to read last data entry");
+    
+    let last_data_entry = SensorDataEntry {
+        ts: last_entry_data.0,
+        attrs: last_entry_data.1
+    };
+
+    start_sensor_data_aquisition_engine(storage_tx, last_data_entry);
+
     println!("Initializing Web Server...");
     // start web server (keep Arc to keep server alive)
     let _server = web_server::start_web_server(SENSOR_DATA_LOG_PATH).unwrap();
     println!("Web Server started.");
 
     // threads_controller::spawn_pinned_task("sd-reader", 4096, 1, || {
-    read_sd();
+    // read_sd();
     // });
 
     // TODO:
-    // - emulate sensor data flow
-    //        - sound sensor measurment every 100 ms
-    //        - temperature every 2000 ms
-    //        - light sensor 200 ms
-    //        - write highest value for a minute if changed significantly compared to the last entry
     // - develop map-reduce for data before storage
-    // - only one thread should read/write SD card, make a queue
     // - display js plot
     // - setup clock
     // - remove magic variables and hardcoded values
     // - add tests
-    
-    start_sensor_data_aquisition_engine();
+
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp() );
@@ -100,6 +121,10 @@ use std::collections::HashMap;
 use std::sync::mpsc;
 use daq_engine;
 use daq_engine::DataEntryTrait;
+use storage::*;
+// use storage::StorageController;
+// use storage::VectorStorageClass;
+
 
 
 #[derive(Default, Debug)]
@@ -125,11 +150,7 @@ fn read_light_sensor() -> f32 {
     fake_sensors::read_sensor(fake_sensors::SensorType::Light)
 }
 
-fn start_sensor_data_aquisition_engine() {
-    let last_data_entry = SensorDataEntry {
-        ts: 1767268800,
-        attrs: HashMap::new()
-    };
+fn start_sensor_data_aquisition_engine(storage_tx: mpsc::Sender<(String, (u64, HashMap<String, f32>))>, last_data_entry: SensorDataEntry) {
     let sound_sensor_reader = daq_engine::SensorReader {
         name: "sound".to_string(),
         wait_ms: 50,
@@ -158,42 +179,41 @@ fn start_sensor_data_aquisition_engine() {
                              temperature_sensor_reader, 
                              humidity_sensor_reader, 
                              light_sensor_reader];
-    let (storage_tx, storage_rx) = mpsc::channel();
 
     daq_engine::run(last_data_entry, sensor_readers, storage_tx);
 }
 
 
-fn read_sd() {
-    // 1. Mount the physical SD card
-    let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
+// fn read_sd() {
+//     // 1. Mount the physical SD card
+//     let _card_handle = sd_card::mount_sd_card(SD_CARD_MOUNT_PATH); //.unwrap();
 
-    // 2. Write a file using standard std::io error mapping
-    println!("Writing data sample to file...");
+//     // 2. Write a file using standard std::io error mapping
+//     println!("Writing data sample to file...");
 
-    {
-        let mut file = OpenOptions::new()
-            .create(true) // create if not exists
-            .append(true) // append to the end
-            .open(SENSOR_DATA_LOG_PATH)
-            .unwrap();
+//     {
+//         let mut file = OpenOptions::new()
+//             .create(true) // create if not exists
+//             .append(true) // append to the end
+//             .open(SENSOR_DATA_LOG_PATH)
+//             .unwrap();
 
-        // Write new lines at the end
-        writeln!(file, "Timestamp,Sensor,Value").unwrap();
-        writeln!(file, "171569420,Sound,42").unwrap();
-        file.flush().unwrap(); // ensure data is written
-        println!("File write successful!");
-    }
-    // --- Reading ---
-    let file = File::open(SENSOR_DATA_LOG_PATH).unwrap();
-    let reader = BufReader::new(file);
+//         // Write new lines at the end
+//         writeln!(file, "Timestamp,Sensor,Value").unwrap();
+//         writeln!(file, "171569420,Sound,42").unwrap();
+//         file.flush().unwrap(); // ensure data is written
+//         println!("File write successful!");
+//     }
+//     // --- Reading ---
+//     let file = File::open(SENSOR_DATA_LOG_PATH).unwrap();
+//     let reader = BufReader::new(file);
 
-    for line in reader.lines() {
-        let line = line.unwrap();
-        println!("{}", line);
-    }
-    println!("File reading ended.");
-}
+//     for line in reader.lines() {
+//         let line = line.unwrap();
+//         println!("{}", line);
+//     }
+//     println!("File reading ended.");
+// }
 
 fn led_hello<MODE: esp_idf_hal::gpio::OutputMode>(led: &mut PinDriver<MODE>) {
     led.set_low().unwrap();

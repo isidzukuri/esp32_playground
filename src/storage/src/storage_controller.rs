@@ -42,7 +42,7 @@ impl<SC: StorageClassTrait + Send + 'static> StorageControllerTrait<SC> for Stor
         let data_schema = self.data_schema.clone();
         thread::spawn(move || {
             for message in receiver {
-                // println!("Worker woke up! Processing: {:?}", message);
+                println!("[StorageController] Worker woke up! Processing: {:?}", message);
                 if let Err(e) = Self::process_message(message, &storage_mutex, &data_schema) {
                     panic!("Error processing message in background thread: {}", e);
                 }
@@ -141,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_saving_incoming_channel_messages() {
-        let  storage_class = VectorStorageClass::default();
+        let storage_class = VectorStorageClass::default();
         let (storage_tx, storage_rx) = mpsc::channel();
         let data_schema = vec![
             "timestamp".to_string(),
