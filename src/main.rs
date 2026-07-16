@@ -5,6 +5,7 @@ use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, alway
 
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_hal::peripherals::Peripherals;
+use std::collections::HashMap;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -34,8 +35,6 @@ const DEFAULT_TIMESTAMP: u64 = 1767268800; // Jan 1, 2026 12:00:00 UTC is 176726
 
 #[cfg(any(feature = "adc-oneshot-legacy", esp_idf_version_major = "4"))]
 fn main() {
-    use std::collections::HashMap;
-
     let peripherals = Peripherals::take().unwrap();
 
     clock::set_time(DEFAULT_TIMESTAMP);
@@ -80,12 +79,6 @@ fn main() {
     // start web server (keep Arc to keep server alive)
     let _server = web_server::run(Arc::new(Mutex::new(storage_controller))).unwrap();
     println!("Web Server started.");
-
-    // TODO:
-    // - display js plot
-    // - setup clock
-    // - remove magic variables and hardcoded values
-    // - add tests
 
     loop {
         println!("Heartbeat. TS: {}", clock::get_current_timestamp());
