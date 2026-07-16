@@ -8,3 +8,4 @@ src/storage/target
 src/storage/Cargo.lock
 src/daq_engine/Cargo.lock
 src/fake_sensors/Cargo.lock
+readme.html
