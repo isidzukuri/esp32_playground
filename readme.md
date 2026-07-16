@@ -107,3 +107,5 @@ clean readme
 tests
 
 draw scheme for DaqEngine and for architecture
+
+describe each file and folder of proj
