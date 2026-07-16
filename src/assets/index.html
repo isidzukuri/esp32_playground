@@ -11,9 +11,16 @@
     <h2>ESP32 Server</h2>
     <p>Temperature: <b id="temp">--</b> &deg;C</p>
     <p>Humidity: <b id="hum">--</b> %</p>
-    <div style="margin-top:1.5em;">
-      <a href="plots.html" style="color:#6cf;font-weight:bold;">View Temperature Plot</a>
+    <div style="margin:1.5em;">
     </div>
+    <hr/>
+
+    <h3>Measurements</h3>
+    <div id="plots">
+      <div class="controls" id="scale-controls"></div>
+      <div id="plots-wrapper"></div>
+    </div>
+    <hr/>
 
     <div id="chat">
       <h3>Chat</h3>
@@ -24,6 +31,9 @@
         <div><button id="chat-send">Send</button></div>
       </div>
     </div>
+    <hr/>
+    <h3>System stats</h3>
+    <div id="system_stats"></div>
 
   </div>
   <script src="scripts.js"></script>

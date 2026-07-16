@@ -109,6 +109,18 @@ where
         },
     )?;
 
+    server.fn_handler(
+        "/system_stats",
+        Method::Get,
+        move |request| -> Result<(), EspIOError> {
+            let mut resp =
+                request.into_response(200, Some("OK"), &[("Content-Type", "text/csv")])?;
+
+            let _ = resp.write(crate::top::get_system_stats_as_csv().as_bytes())?;
+            Ok(())
+        },
+    )?;
+
     // TODO: refactor WS code.
     #[cfg(esp_idf_httpd_ws_support)]
     {

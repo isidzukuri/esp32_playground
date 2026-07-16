@@ -1,13 +1,193 @@
 body { background: #222; color: #eee; font-family: Arial, sans-serif; }
 .container { max-width: 400px; margin: 40px auto; background: #333; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px #111; text-align: center; }
 .logo { width: 80px; margin: 1em auto; display: block; }
-h2 { color: #6cf; }
+h2 { color: #83fd57; }
 .chat-log { background: #111; border: 1px solid #444; border-radius: 8px; height: 240px; margin: 1em 0; padding: 0.75em; overflow-y: auto; text-align: left; }
 .chat-line { margin-bottom: 0.5em; font-size: 0.95rem; }
 .chat-status { color: #8fc; font-style: italic; }
 .chat-form div { width: 95%; margin-bottom: 10px; }
 .chat-form textarea { height: 50px; }
 .chat-form input, .chat-form textarea { width: 100%; background: #222; border: 1px solid #555; border-radius: 6px; color: #eee; padding: 0.75em; }
-.chat-form button { background: #6cf; border: none; border-radius: 6px; color: #111; font-weight: bold; padding: 0.75em 1em; cursor: pointer; }
+.chat-form button { background: #83fd57; border: none; border-radius: 6px; color: #111; font-weight: bold; padding: 0.75em 1em; cursor: pointer; }
 .chat-form button:hover { background: #8df; }
 .chat-raw { color: #cfc; }
+
+
+h2 { 
+  color: #83fd57; 
+  margin-top: 0;
+  margin-bottom: 1.5em;
+}
+
+/* Adapting controls and buttons to the theme */
+.controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 2em;
+  background: #111;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.scale-btn {
+  background: #222; 
+  border: 1px solid #555; 
+  border-radius: 6px; 
+  color: #eee; 
+  padding: 0.5em 0.6em;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.scale-btn:hover { 
+  background: #444; 
+  border-color: #83fd57;
+}
+
+.scale-btn.active { 
+  background: #83fd57; 
+  border-color: #83fd57;
+  color: #111; 
+}
+
+/* Plot items container stack */
+.plot-container {
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin-bottom: 1.5em;
+  padding: 1.2em;
+  text-align: left;
+}
+
+.plot-title {
+  color: #83fd57;
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-transform: capitalize;
+}
+
+/* Dynamic SVG Vectors Dark Theme Overrides */
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.grid-line {
+  stroke: #222;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.axis-line {
+  stroke: #444;
+  stroke-width: 1.5;
+}
+
+.plot-line {
+  fill: none;
+  stroke: #83fd57; /* Matches your accent h2 style */
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plot-area {
+  fill: rgba(102, 204, 255, 0.08); /* Faded accent glow under the curve */
+}
+
+.axis-text {
+  font-size: 21px;
+  fill: #888;
+}
+
+.axis-text.y-label {
+  text-anchor: end;
+}
+
+.axis-text.x-label {
+  text-anchor: middle;
+}
+
+/* Container for the overall dashboard */
+.system-status-dashboard {
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+/* Heap summary bar (styled like your .controls/.chat-status styling) */
+.heap-summary {
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 0.75em;
+  font-size: 0.9rem;
+  margin-bottom: 1.5em;
+  color: #eee;
+  text-align: center;
+}
+
+.accent-value {
+  color: #83fd57;
+  font-weight: bold;
+}
+
+/* Scrollable wrapper in case of many tasks */
+.table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+
+/* Dark theme table styling */
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.task-table th, 
+.task-table td {
+  padding: 0.75em;
+  border-bottom: 1px solid #222;
+}
+
+/* Headings match your scale-btn.active style */
+.task-table th {
+  background-color: #222;
+  color: #83fd57;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 2px solid #444;
+}
+
+.task-table tbody tr {
+  background: #111;
+}
+
+.task-table tbody tr:hover {
+  background: #1a1a1a;
+}
+
+/* Stylized column properties */
+.task-name {
+  font-family: monospace;
+  color: #cfc; /* Pale green from your .chat-raw rules */
+}
+
+.cpu-pct {
+  color: #83fd57;
+  font-weight: bold;
+}
