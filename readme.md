@@ -24,7 +24,7 @@ The architecture is modular and separates concerns between hardware interfacing,
 
 #### **main()** 
 
-function is the application's entry point. Its primary role is to act as the central orchestrator, initializing the key software modules and establishing communication paths between them. It spawns the distinct concurrent components and passes necessary parameters to link them together.
+function is the application's entry point. Its primary role is to act as the central orchestrator, initializing the key software modules and establishing communication paths between them.
 
 #### **Web Server**
 
@@ -33,13 +33,13 @@ This is the external-facing engine. It creates the user and network interface fo
 #### DNS & WIFI Access Point: 
 These components are collectively part of the networking stack that the WebServer depends on to establish connectivity and communicate via protocols like WebSockets and a defined API
 
-#### **storage** 
+#### **Storage** 
 
 purpose is to encapsulate all logic and data related to data persistence, ensuring thread safety and data integrity. `StorageController` acts as the facade and orchestrator for the storage system, managing threads lifecycle:  
 
-- **Writer Thread**: This thread holds a Receiver instance connected to `mpsc::channel`. It is dedicated to popping data off the channel and initiating a write operation to the storage media. 
+- **Writer Thread** holds a Receiver instance connected to `mpsc::channel`. It is dedicated to popping data off the channel and initiating a write operation to the storage media. 
 
-- **Reader Thread**: This thread (implied here for servicing data read requests from the WebServer or elsewhere) is dedicated to managing read operations from the storage media. 
+- **Reader Thread** (implied here for servicing data read requests from the WebServer or elsewhere) is dedicated to managing read operations from the storage media. 
 
 Both the Writer and Reader threads need to access the underlying storage class. To prevent race conditions and ensure thread safety, access is mediated by a `Mutex`.
 
@@ -52,7 +52,7 @@ By implementing a `StorageClassTrait`, you can seamlessly swap out the underlyin
 
 Is built on a concurrent, multi-threaded pipeline designed to decouple high-frequency sensor reading from data logging and storage.
 
-<img src="misc/daq.svg" />
+<img src="misc/daq.svg" width="100%" />
 
 `DaqEngine` and the `storage` subsystem comunicate via `mpsc::channel`. This is a classical asynchronous, one-way message queue Multi-Producer Single-Consumer). This channel provides crucial decoupling: the DaqEngine does not need to wait for a slow storage operation (e.g., flash write) to complete before reading the next sensor value, enhancing system responsiveness.
 
